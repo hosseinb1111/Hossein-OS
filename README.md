@@ -8,7 +8,6 @@
 [![CSS](https://img.shields.io/badge/CSS-custom-1572B6?logo=css3&logoColor=white)](#)
 [![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?logo=javascript&logoColor=111)](#)
 [![Responsive](https://img.shields.io/badge/UI-responsive-22c55e)](#mobile)
-[![Accessibility](https://img.shields.io/badge/accessibility-keyboard%20%2B%20reduced%20motion-8b5cf6)](#accessibility)
 
 **HOSSEIN OS** is the interactive portfolio environment of **Hossein Seyed Bagheri**, a Computer Engineering student and developer interested in practical software across **web development, AI applications, Cloudflare edge systems, realtime applications, APIs, networking, and experimentation**.
 
