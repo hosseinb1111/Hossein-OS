@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070b12">
+<title>HOSSEIN OS — Developer Workstation</title>
+<meta name="description" content="HOSSEIN OS — an interactive portfolio operating system for Hossein Seyed Bagheri.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b12;
+  --bg-2:#0a1019;
+  --panel:#0d1521;
+  --panel-2:#111b28;
+  --panel-3:#152235;
+  --bar:#0a121d;
+  --surface:#0f1824;
+  --line:#1b2a3c;
+  --line-soft:#142031;
+  --line-strong:#2a4058;
+  --text:#e9f0f8;
+  --text-soft:#b8c4d2;
+  --muted:#738399;
+  --cyan:#5ce7ff;
+  --cyan-soft:#9af2ff;
+  --cyan-dim:#2999b1;
+  --cyan-faint:#153d49;
+  --violet:#a997ff;
+  --violet-dim:#6f65b8;
+  --green:#56e3a0;
+  --yellow:#f2d06b;
+  --red:#ff7080;
+  --orange:#ff9b62;
+  --shadow:0 26px 80px rgba(0,0,0,.46),0 10px 28px rgba(0,0,0,.20);
+  --radius:10px;
+  --radius-sm:7px;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --display:'Space Grotesk',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --persian:'Vazirmatn',system-ui,sans-serif;
+  --taskbar:52px;
+  --transition:150ms ease;
+}
+
+html[data-theme="light"]{
+  --bg:#eef3f8;
+  --bg-2:#e7edf4;
+  --panel:#f8fafc;
+  --panel-2:#eef3f8;
+  --panel-3:#e5edf5;
+  --bar:#f3f6f9;
+  --surface:#fbfdff;
+  --line:#cfdae5;
+  --line-soft:#dde6ee;
+  --line-strong:#aebfd0;
+  --text:#172334;
+  --text-soft:#425169;
+  --muted:#687890;
+  --cyan:#007e9e;
+  --cyan-soft:#00667f;
+  --cyan-dim:#4098ad;
+  --cyan-faint:#cbe5ec;
+  --violet:#6556c2;
+  --violet-dim:#8277ca;
+  --green:#138a57;
+  --yellow:#8b6b00;
+  --red:#b72e43;
+  --orange:#bd5f1b;
+  --shadow:0 26px 70px rgba(33,58,82,.16),0 10px 24px rgba(33,58,82,.09);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--mono);color:var(--text);background:var(--bg);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button,input,select{font:inherit}
+button{color:inherit}
+a{color:var(--cyan);text-decoration:none}
+a:hover{color:var(--cyan-soft)}
+::selection{background:var(--cyan);color:var(--bg)}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.hidden{display:none!important}
+
+/* Ambient desktop */
+#desktop{
+  position:fixed;inset:0 0 calc(var(--taskbar) + env(safe-area-inset-bottom,0px)) 0;overflow:hidden;
+  background:
+    radial-gradient(70% 70% at 12% 0%,rgba(92,231,255,.075),transparent 66%),
+    radial-gradient(70% 80% at 95% 100%,rgba(169,151,255,.055),transparent 72%),
+    linear-gradient(180deg,var(--bg-2),var(--bg));
+}
+#desktop::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 88%);
+}
+#desktop::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(70% 55% at 48% 0%,transparent 45%,rgba(0,0,0,.18) 100%);
+}
+
+.desktop-watermark{position:absolute;right:38px;bottom:23px;font:700 clamp(58px,12vw,156px)/.82 var(--display);letter-spacing:-.08em;color:rgba(255,255,255,.025);user-select:none;pointer-events:none;z-index:1}
+.desktop-status{position:absolute;right:20px;top:18px;z-index:2;display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);background:rgba(8,13,20,.32);backdrop-filter:blur(6px);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+html[data-theme="light"] .desktop-status{background:rgba(255,255,255,.54)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 9px rgba(86,227,160,.5)}
+
+/* Boot */
+#boot{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;justify-content:center;padding:0 8vw;background:radial-gradient(70% 60% at 8% 16%,rgba(92,231,255,.08),transparent 70%),radial-gradient(60% 70% at 92% 88%,rgba(169,151,255,.07),transparent 72%),var(--bg);transition:opacity .4s ease}
+#boot.gone{opacity:0;pointer-events:none}
+.boot-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:28px;flex-wrap:wrap}
+.boot-logo{font:700 clamp(46px,9vw,110px)/.82 var(--display);letter-spacing:-.065em;color:var(--text)}
+.boot-logo span{color:var(--cyan);text-shadow:0 0 18px rgba(92,231,255,.28)}
+.boot-build{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding-bottom:6px}
+.boot-log{width:min(760px,100%);min-height:210px;color:var(--muted);font-size:12px}
+.boot-log div{margin:0 0 5px;white-space:pre-wrap}
+.boot-log .ok{color:var(--green)}
+.boot-log .ok::before{content:"[ OK ] ";color:var(--green)}
+.boot-log .sys{color:var(--cyan)}
+.boot-progress{width:min(470px,100%);height:8px;border:1px solid var(--line);padding:1px;background:var(--bg-2)}
+.boot-progress i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .18s ease;box-shadow:0 0 16px rgba(92,231,255,.18)}
+.boot-skip{margin-top:15px;color:var(--muted);font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+
+/* Desktop icons */
+.icons{position:absolute;left:12px;top:20px;bottom:18px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:5px 8px;z-index:3}
+.icon{width:104px;border:1px solid transparent;border-radius:8px;background:transparent;padding:10px 7px 9px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;text-align:center;user-select:none;transition:background var(--transition),border-color var(--transition),transform var(--transition)}
+.icon:hover,.icon:focus-visible{background:rgba(92,231,255,.045);border-color:var(--line);transform:translateY(-1px)}
+.icon.selected{background:rgba(92,231,255,.075);border-color:var(--cyan-dim)}
+.icon-glyph{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:rgba(255,255,255,.01);color:var(--cyan);font-weight:600;font-size:13px;letter-spacing:-.04em}
+.icon:nth-child(3n) .icon-glyph{color:var(--violet)}
+.icon:nth-child(4n) .icon-glyph{color:var(--orange)}
+.icon-name{font-size:10.5px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:94px}
+.desktop-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+
+/* Taskbar */
+#taskbar{position:fixed;left:0;right:0;bottom:0;z-index:9000;height:calc(var(--taskbar) + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:6px;padding:0 8px env(safe-area-inset-bottom,0px);background:var(--bar);border-top:1px solid var(--line)}
+.start-btn,.task,.tray-btn{height:34px;border:1px solid var(--line);background:transparent;cursor:pointer;transition:background var(--transition),border-color var(--transition),color var(--transition)}
+.start-btn{display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--text-soft);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.start-btn:hover,.start-btn.on{border-color:var(--cyan-dim);color:var(--cyan);background:rgba(92,231,255,.045)}
+.start-glyph{color:var(--cyan);font-size:14px}
+.taskbar-tasks{display:flex;align-items:center;gap:5px;flex:1;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin:0 3px}
+.taskbar-tasks::-webkit-scrollbar{display:none}
+.task{display:flex;align-items:center;gap:7px;padding:0 10px;max-width:190px;flex:none;color:var(--muted);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task:hover{border-color:var(--cyan-faint);color:var(--text-soft)}
+.task.active{color:var(--cyan-soft);border-color:var(--cyan-dim);background:rgba(92,231,255,.045)}
+.task-glyph{color:var(--cyan-dim)}
+.tray{display:flex;align-items:center;gap:8px;padding-right:4px}
+.tray-btn{width:34px;color:var(--muted)}
+.tray-btn:hover{color:var(--cyan);border-color:var(--cyan-dim);background:rgba(92,231,255,.045)}
+.tray-status{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase}
+.tray-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.clock{min-width:56px;color:var(--text);font-size:12px;text-align:right}
+
+/* Start / launcher */
+#startmenu{position:fixed;left:8px;bottom:calc(var(--taskbar) + env(safe-area-inset-bottom,0px) + 7px);z-index:9100;width:min(610px,calc(100vw - 16px));display:none;overflow:hidden;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow)}
+#startmenu.open{display:block;animation:startIn .12s ease-out}
+@keyframes startIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.launcher-top{display:grid;grid-template-columns:1.2fr .8fr;border-bottom:1px solid var(--line)}
+.launcher-brand{padding:18px 18px 16px;background:linear-gradient(135deg,rgba(92,231,255,.05),transparent 65%)}
+.launcher-brand h2{font:700 24px/1 var(--display);letter-spacing:-.04em}
+.launcher-brand h2 span{color:var(--cyan)}
+.launcher-brand p{margin-top:6px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.09em}
+.launcher-search{padding:18px;border-left:1px solid var(--line);display:flex;align-items:center}
+.launcher-search input{width:100%;height:38px;border:1px solid var(--line);background:var(--bg-2);color:var(--text);padding:0 11px;outline:none;font-size:11px}
+.launcher-search input:focus{border-color:var(--cyan-dim)}
+.launcher-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;max-height:360px;overflow:auto}
+.launcher-item{min-height:72px;padding:9px;border:1px solid transparent;background:transparent;display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;cursor:pointer}
+.launcher-item:hover,.launcher-item:focus-visible{border-color:var(--line);background:rgba(92,231,255,.035)}
+.launcher-item .g{font-size:14px;color:var(--cyan)}
+.launcher-item .n{font-size:10px;color:var(--text-soft)}
+.launcher-item .d{font-size:9px;color:var(--muted);line-height:1.4}
+.launcher-footer{padding:9px 11px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+
+/* Windows */
+.win{position:absolute;min-width:280px;min-height:180px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);z-index:20;overflow:hidden;animation:windowIn .13s ease-out}
+@keyframes windowIn{from{opacity:0;transform:scale(.985) translateY(7px)}to{opacity:1;transform:none}}
+.win.focused{border-color:rgba(92,231,255,.52);box-shadow:0 30px 90px rgba(0,0,0,.52),0 0 0 1px rgba(92,231,255,.04),0 0 26px rgba(92,231,255,.045)}
+.win.min{display:none}
+.win.max{inset:0 0 calc(var(--taskbar) + env(safe-area-inset-bottom,0px)) 0!important;width:auto!important;height:auto!important}
+.win-header{height:40px;flex:none;display:flex;align-items:center;gap:9px;padding:0 10px;background:var(--bar);border-bottom:1px solid var(--line);cursor:grab;user-select:none;touch-action:none}
+.win-header.drag{cursor:grabbing}
+.win-controls{display:flex;gap:6px}
+.win-control{width:12px;height:12px;border:0;border-radius:50%;cursor:pointer;position:relative;padding:0}
+.win-control.close{background:var(--red)}
+.win-control.minimize{background:var(--yellow)}
+.win-control.maximize{background:var(--green)}
+.win-control.close::before{content:'×';position:absolute;inset:0;display:grid;place-items:center;color:#25070d;font:bold 9px/1 var(--mono)}
+.win-control.minimize::before{content:'';position:absolute;left:50%;top:50%;width:5px;height:1px;transform:translate(-50%,-50%);background:#2d2205}
+.win-control.maximize::before{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;transform:translate(-50%,-50%);border:1px solid #05331e}
+.win-icon{color:var(--cyan-dim);font-size:11px;min-width:20px}
+.win-title{flex:1;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text-soft);font-size:10.5px;letter-spacing:.02em}
+.win.focused .win-title{color:var(--cyan-soft)}
+.win-body{flex:1;overflow:auto;padding:19px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;overscroll-behavior:contain}
+.win-body::-webkit-scrollbar{width:8px}.win-body::-webkit-scrollbar-thumb{background:var(--line)}
+.win-resize{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize}.win-resize::after{content:'';position:absolute;right:4px;bottom:4px;width:7px;height:7px;border-right:2px solid var(--line-strong);border-bottom:2px solid var(--line-strong)}
+.win.focused .win-resize::after{border-color:var(--cyan-dim)}
+
+/* App primitives */
+.app-kicker{font-size:10px;color:var(--cyan-dim);letter-spacing:.09em;text-transform:uppercase;margin-bottom:7px}
+.app-title{font:700 29px/1.02 var(--display);letter-spacing:-.045em;color:var(--text);margin-bottom:9px}
+.app-title::after{content:'';display:block;width:34px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--violet));margin-top:11px}
+.app-sub{font-size:12px;color:var(--muted);margin-bottom:19px;max-width:760px}
+.app-grid{display:grid;gap:9px}.app-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.app-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.panel{border:1px solid var(--line);background:var(--bg-2);padding:14px}.panel h3{font:600 15px/1.2 var(--display);margin-bottom:7px}.panel p{color:var(--text-soft);font-size:12px}.panel .muted{color:var(--muted)}
+.mono-small{font:10px/1.6 var(--mono);color:var(--muted)}
+.section-label{margin:18px 0 9px;font-size:9.5px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px}.tag{border:1px solid var(--line);padding:4px 7px;color:var(--muted);font-size:9.5px;background:rgba(255,255,255,.008)}
+.list{list-style:none}.list li{position:relative;padding-left:15px;margin-bottom:7px;color:var(--text-soft);font-size:12px}.list li::before{content:'›';position:absolute;left:0;color:var(--cyan)}
+.btn-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:0 11px;border:1px solid var(--cyan-dim);background:rgba(92,231,255,.045);color:var(--cyan);cursor:pointer;font-size:10px;letter-spacing:.07em;text-transform:uppercase}.btn:hover{background:rgba(92,231,255,.09)}.btn.secondary{border-color:var(--line);background:transparent;color:var(--text-soft)}.btn.secondary:hover{border-color:var(--line-strong);color:var(--text)}.btn.danger{border-color:rgba(255,112,128,.5);color:var(--red);background:rgba(255,112,128,.04)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.stat-card{border:1px solid var(--line);padding:10px;background:var(--bg-2)}.stat-card .n{font:600 18px/1 var(--display);color:var(--text)}.stat-card .l{margin-top:5px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kv{display:grid;grid-template-columns:150px 1fr;border-top:1px solid var(--line-soft)}.kv>div{padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:11px}.kv .k{color:var(--muted)}.kv .v{color:var(--text-soft)}
+.code{font:11px/1.7 var(--mono);white-space:pre-wrap;color:var(--text-soft);background:#05080d;border:1px solid var(--line);padding:13px;overflow:auto}.code .cyan{color:var(--cyan)}.code .violet{color:var(--violet)}.code .green{color:var(--green)}
+.timeline{display:grid;gap:9px}.timeline-item{display:grid;grid-template-columns:16px 1fr;gap:11px}.timeline-mark{position:relative}.timeline-mark::before{content:'';position:absolute;left:5px;top:4px;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px rgba(92,231,255,.25)}.timeline-mark::after{content:'';position:absolute;left:7px;top:14px;bottom:-16px;width:1px;background:var(--line)}.timeline-item:last-child .timeline-mark::after{display:none}.timeline-content{border:1px solid var(--line);background:var(--bg-2);padding:11px}.timeline-content .when{font-size:9px;color:var(--cyan-dim);letter-spacing:.08em;text-transform:uppercase}.timeline-content h3{font:600 15px/1.2 var(--display);margin-top:4px}.timeline-content p{margin-top:5px;font-size:11.5px;color:var(--muted)}
+
+/* Project explorer */
+.project-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}.project-filter{display:flex;gap:5px;flex-wrap:wrap}.filter{height:30px;padding:0 9px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.filter.active,.filter:hover{border-color:var(--cyan-dim);color:var(--cyan);background:rgba(92,231,255,.035)}.project-search{width:min(280px,100%);height:30px;border:1px solid var(--line);background:var(--bg-2);color:var(--text);padding:0 9px;outline:none;font-size:10px}.project-search:focus{border-color:var(--cyan-dim)}
+.project-group{margin-top:18px}.project-group-title{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--cyan);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}.project-group-title::after{content:'';height:1px;background:var(--line-soft);flex:1}
+.project-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.project-card{padding:13px;border:1px solid var(--line);background:var(--bg-2);cursor:pointer;transition:border-color var(--transition),background var(--transition),transform var(--transition)}.project-card:hover{border-color:var(--cyan-faint);background:var(--panel-2);transform:translateY(-1px)}.project-card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.project-card h3{font:600 15px/1.1 var(--display)}.project-card .icon{all:unset;color:var(--cyan);font-size:13px}.project-card .cat{color:var(--cyan-dim);font-size:9px;text-transform:uppercase;letter-spacing:.07em}.project-card p{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.55}.project-card .stack{margin-top:10px}.project-card .arrow{float:right;color:var(--muted);font-size:11px}
+
+/* Lab maps */
+.map{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:6px;margin-top:10px}.map-node{min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--bg-2);text-align:center;padding:8px}.map-node strong{font:600 12px/1.1 var(--display);color:var(--text)}.map-node span{margin-top:4px;font-size:8.5px;color:var(--muted)}.map-arrow{text-align:center;color:var(--cyan-dim)}
+.event-list{display:grid;gap:5px;margin-top:9px}.event{display:grid;grid-template-columns:88px 1fr;gap:8px;border:1px solid var(--line-soft);padding:7px 9px;background:rgba(255,255,255,.004)}.event .e{font-size:9px;color:var(--cyan-dim)}.event .t{font-size:10px;color:var(--muted)}
+
+/* Explorer */
+.explorer{display:grid;grid-template-columns:190px 1fr;min-height:340px;border:1px solid var(--line)}.tree{padding:9px;border-right:1px solid var(--line);background:var(--bg-2)}.tree-item{display:block;width:100%;padding:7px 8px;border:0;background:transparent;color:var(--muted);text-align:left;font-size:10px;cursor:pointer}.tree-item:hover,.tree-item.active{color:var(--cyan);background:rgba(92,231,255,.035)}.tree-item.indent{padding-left:22px}.folder-view{padding:14px;background:var(--panel)}.folder-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;margin-bottom:12px}.folder-head h3{font:600 19px/1 var(--display)}.file-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.file-item{border:1px solid var(--line);background:var(--bg-2);padding:11px;text-align:left;cursor:pointer}.file-item:hover{border-color:var(--cyan-faint)}.file-item .fi{font-size:14px;color:var(--cyan);margin-bottom:6px}.file-item strong{display:block;font-size:10px}.file-item span{display:block;margin-top:4px;font-size:8.5px;color:var(--muted)}
+
+/* Terminal */
+.terminal{min-height:340px;display:flex;flex-direction:column;background:#05080d;border:1px solid var(--line);padding:13px}.terminal-output{flex:1;overflow:auto;font:11px/1.7 var(--mono);color:#a9b6c6;white-space:pre-wrap}.terminal-output .prompt{color:var(--green)}.terminal-output .cmd{color:var(--cyan)}.terminal-output .err{color:var(--red)}.terminal-output .violet{color:var(--violet)}.terminal-input-row{display:flex;gap:7px;border-top:1px solid var(--line-soft);padding-top:9px;margin-top:9px}.terminal-prompt{color:var(--green);font-size:11px;white-space:nowrap}.terminal-input{flex:1;border:0;outline:none;background:transparent;color:var(--text);font:11px var(--mono)}
+
+/* Settings */
+.settings-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}.settings-tab{height:31px;padding:0 9px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em}.settings-tab.active,.settings-tab:hover{color:var(--cyan);border-color:var(--cyan-dim)}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid var(--line-soft)}.setting-row .copy strong{display:block;font:600 13px/1.15 var(--display)}.setting-row .copy span{display:block;margin-top:4px;color:var(--muted);font-size:9.5px}.switch{width:40px;height:22px;border:1px solid var(--line);background:var(--bg-2);border-radius:999px;position:relative;cursor:pointer}.switch::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform var(--transition),background var(--transition)}.switch.on{border-color:var(--cyan-dim);background:rgba(92,231,255,.08)}.switch.on::after{transform:translateX(18px);background:var(--cyan)}.select{height:32px;border:1px solid var(--line);background:var(--bg-2);color:var(--text-soft);padding:0 8px;font-size:10px;outline:none}
+
+/* Notifications / toast */
+#toasts{position:fixed;right:14px;top:14px;z-index:12000;display:grid;gap:6px;width:min(320px,calc(100vw - 28px));pointer-events:none}.toast{border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);padding:10px 11px;animation:toastIn .16s ease-out}.toast strong{display:block;font:600 12px/1.2 var(--display);color:var(--text)}.toast p{margin-top:3px;color:var(--muted);font-size:9.5px}.toast.info{border-left:2px solid var(--cyan)}.toast.good{border-left:2px solid var(--green)}.toast.warn{border-left:2px solid var(--yellow)}.toast.bad{border-left:2px solid var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+
+/* Lock / shutdown */
+#lockscreen,#shutdown{position:fixed;inset:0;display:none;z-index:11000;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:var(--bg)}#lockscreen.show,#shutdown.show{display:flex}
+#lock-canvas{position:absolute;inset:0;width:100%;height:100%}.lock-ui{position:relative;z-index:2}.lock-clock{font:600 clamp(78px,17vw,176px)/.82 var(--display);letter-spacing:-.07em;color:var(--text);text-shadow:0 0 26px rgba(92,231,255,.14)}.lock-date{margin-top:14px;color:var(--text-soft);font-size:11px;letter-spacing:.17em;text-transform:uppercase}.lock-hint{margin-top:29px;color:var(--muted);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;animation:pulse 2.4s ease-in-out infinite}.shutdown-card{width:min(470px,calc(100vw - 30px));border:1px solid var(--line);background:var(--panel);padding:30px}.shutdown-card h2{font:700 38px/1 var(--display);letter-spacing:-.06em}.shutdown-card h2 span{color:var(--cyan)}.shutdown-card p{margin-top:10px;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}.shutdown-actions{display:flex;justify-content:center;gap:7px;margin-top:20px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* System log */
+.logbox{border:1px solid var(--line);background:#05080d;padding:12px;font:10px/1.75 var(--mono);color:#9dacbe;min-height:270px;overflow:auto}.logline .stamp{color:#58687e}.logline .kind{color:var(--cyan)}.logline .kind.edge{color:var(--orange)}.logline .kind.ai{color:var(--violet)}.logline .kind.good{color:var(--green)}
+
+/* Mobile */
+@media(max-width:820px){
+  :root{--taskbar:54px}
+  .desktop-status{display:none}.desktop-watermark,.desktop-hint{display:none}
+  .icons{top:10px;left:8px;right:8px;bottom:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;max-height:230px;overflow:hidden}.icon{width:auto;min-width:0}.icon-glyph{width:36px;height:36px}
+  .taskbar-tasks{display:none}
+  .tray-status{display:none}
+  .start-btn .start-label{display:none}
+  #taskbar{gap:6px}.start-btn{width:38px;padding:0;justify-content:center}.tray{margin-left:auto}
+  .win{inset:0 0 calc(var(--taskbar) + env(safe-area-inset-bottom,0px)) 0!important;width:auto!important;height:auto!important;min-width:0;animation:mobileWinIn .15s ease-out}.win-resize{display:none}.win-header{height:46px;padding:0 13px}.win-control{width:16px;height:16px}.win-control.close::before{font-size:11px}.win-controls{gap:8px}.win-body{padding:17px 14px 22px}
+  @keyframes mobileWinIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .launcher-top{grid-template-columns:1fr}.launcher-search{border-left:0;border-top:1px solid var(--line)}.launcher-grid{grid-template-columns:repeat(3,1fr);max-height:calc(100vh - 220px)}
+  .app-grid.two,.app-grid.three{grid-template-columns:1fr}.project-list{grid-template-columns:1fr}.map{grid-template-columns:1fr;gap:5px}.map-arrow{transform:rotate(90deg)}.stat-grid{grid-template-columns:repeat(2,1fr)}.explorer{grid-template-columns:1fr}.tree{border-right:0;border-bottom:1px solid var(--line);display:flex;gap:4px;overflow:auto}.tree-item{width:auto;white-space:nowrap}.file-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kv{grid-template-columns:115px 1fr}.desktop-status{top:8px;right:8px}
+}
+@media(max-width:460px){
+  .icons{grid-template-columns:repeat(3,minmax(0,1fr));max-height:255px}.launcher-grid{grid-template-columns:repeat(2,1fr)}.file-grid{grid-template-columns:1fr}.boot-head{display:block}.boot-build{margin-top:8px}.boot-log{font-size:11px}.project-card h3{font-size:14px}.app-title{font-size:25px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Persian */
+html[lang="fa"] body{font-family:var(--persian);direction:rtl}html[lang="fa"] .win-title,html[lang="fa"] .launcher-footer,html[lang="fa"] .desktop-hint{direction:rtl}html[lang="fa"] .win-header{direction:ltr}html[lang="fa"] .app-sub,html[lang="fa"] .panel p,html[lang="fa"] .project-card p,html[lang="fa"] .list li,html[lang="fa"] .timeline-content p{line-height:1.8}
+</style>
+</head>
+<body>
+
+<div id="boot" aria-live="polite">
+  <div class="boot-head">
+    <div class="boot-logo">HOSSEIN <span>OS</span></div>
+    <div class="boot-build">personal developer workstation · build 1.0</div>
+  </div>
+  <div class="boot-log" id="bootlog"></div>
+  <div class="boot-progress"><i id="bootprogress"></i></div>
+  <div class="boot-skip">click / tap / press any key to skip</div>
+</div>
+
+<main id="desktop" aria-label="HOSSEIN OS desktop">
+  <div class="desktop-status"><span class="status-dot"></span><span id="desktopStatusText">system online</span></div>
+  <div class="desktop-watermark">HOSSEIN OS</div>
+  <div class="icons" id="desktopIcons"></div>
+  <div class="desktop-hint" id="desktopHint">double-click / tap an app · drag windows · terminal: type <strong>help</strong></div>
+</main>
+
+<nav id="startmenu" aria-label="Application launcher">
+  <div class="launcher-top">
+    <div class="launcher-brand">
+      <h2>HOSSEIN <span>OS</span></h2>
+      <p>Computer Engineering Student · Developer</p>
+    </div>
+    <div class="launcher-search">
+      <input id="launcherSearch" aria-label="Search apps and projects" autocomplete="off" placeholder="search apps, projects, technologies…">
+    </div>
+  </div>
+  <div class="launcher-grid" id="launcherGrid"></div>
+  <div class="launcher-footer"><span>↵ open</span><span>esc close</span><span>HOSSEIN OS / portfolio environment</span></div>
+</nav>
+
+<footer id="taskbar">
+  <button class="start-btn" id="startbtn" aria-label="Open application launcher"><span class="start-glyph">⌘</span><span class="start-label">start</span></button>
+  <div class="taskbar-tasks" id="tasks"></div>
+  <div class="tray">
+    <button class="tray-btn" id="lockbtn" title="Lock screen" aria-label="Lock screen">◉</button>
+    <span class="tray-status"><span class="tray-dot"></span><span id="trayStatusText">ready</span></span>
+    <span class="clock" id="clock">00:00</span>
+  </div>
+</footer>
+
+<section id="lockscreen" aria-label="Lock screen">
+  <canvas id="lock-canvas"></canvas>
+  <div class="lock-ui">
+    <div class="lock-clock" id="lockclock">00:00</div>
+    <div class="lock-date" id="lockdate"></div>
+    <div class="lock-hint">click or press any key to unlock</div>
+  </div>
+</section>
+
+<section id="shutdown" aria-label="Shutdown screen">
+  <div class="shutdown-card">
+    <h2>HOSSEIN <span>OS</span></h2>
+    <p>Session ended · the portfolio environment is offline.</p>
+    <div class="shutdown-actions"><button class="btn" id="poweron">▸ restart session</button></div>
+  </div>
+</section>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   HOSSEIN OS — DATA
+   ============================================================ */
+
+const LINKS = {
+  github: "https://github.com/Hosseinb1111",
+  portfolio: "https://hossein.my.id/",
+  persian: "https://fa.hossein.my.id/",
+  email: "mailto:hello@hossein.my.id"
+};
+
+const PROJECTS = [
+  {
+    id:"system-ai", name:"System AI", category:"FLAGSHIP", icon:"AI", group:"AI",
+    description:"AI-powered web application with conversations, streaming responses, long-term memory, web search, image support, exports, multilingual interface, authentication, per-user storage and rate limiting.",
+    stack:["Web","AI","Cloudflare"],
+    details:["AI conversations","Streaming responses","Long-term memory","Web search","Image support","Conversation management","Exports","English / Persian","Authentication","Per-user storage","Rate limiting"],
+    live:"https://ai.hossein.my.id/", source:"https://github.com/Hosseinb1111/cloudflare-based-AI"
+  },
+  {
+    id:"wirechat", name:"WireChat", category:"FLAGSHIP", icon:"RT", group:"REALTIME",
+    description:"Realtime communication system centered on messaging, WebSockets, Cloudflare Durable Objects, room-based communication, synchronization, themes, profiles and lightweight realtime architecture.",
+    stack:["WebSockets","Durable Objects","Cloudflare"],
+    details:["Realtime messaging","WebSockets","Room-based communication","Synchronization","Themes","Profiles","Lightweight realtime architecture"],
+    live:"https://wirechat.hossein.my.id/", source:"https://github.com/Hosseinb1111"
+  },
+  {
+    id:"live-messenger", name:"Live Messenger", category:"REALTIME", icon:"DM", group:"REALTIME",
+    description:"Realtime messaging experience with replies, reactions, profiles, live application state and responsive interface behavior.",
+    stack:["Realtime","Messaging","Responsive UI"],
+    details:["Realtime communication","Messaging","Replies","Reactions","Profiles","Live application state","Responsive interface"],
+    live:"https://chat.hossein.my.id/", source:"https://github.com/Hosseinb1111"
+  },
+  {
+    id:"file-to-link", name:"File to Link", category:"UTILITY", icon:"FS", group:"EDGE / CLOUD",
+    description:"Serverless file sharing tool using a Cloudflare Worker and KV for temporary file access, with batch sharing, previews, raw viewing, direct downloads, expiry settings, Unicode filenames and CORS support.",
+    stack:["Cloudflare Workers","KV","CORS"],
+    details:["Multi-file upload","Batch sharing","Shareable links","Individual file links","File preview","Raw viewing","Direct download","Expiry settings","Unicode filename support","CORS","Automatic expiration","18 MB per-file limit documented in README"],
+    architecture:["Browser","Cloudflare Worker","KV","Temporary access"],
+    live:"https://filetolink.hossein.my.id/", source:"https://github.com/hosseinb1111/file-to-link"
+  },
+  {
+    id:"ping-monitor", name:"Ping Monitor", category:"NETWORK", icon:"NET", group:"NETWORK",
+    description:"Browser-side network measurement dashboard. It measures HTTPS fetch timing rather than OS-level ICMP ping and reports latency, median, average, best, worst, jitter and success rate.",
+    stack:["Vanilla JS","HTTPS fetch","Browser"],
+    details:["Latency","Median","Average","Best / worst","Jitter","Success rate","Status classification","Configurable concurrency","Multiple services","Browser-side measurements","Responsive UI","Accessibility","No accounts","No tracking"],
+    note:"Browser networking does not provide OS-level ICMP socket access. This project therefore measures HTTPS fetch timing from the browser.",
+    live:"https://pinging.ai09.workers.dev/", source:"https://github.com/hosseinb1111/ping-monitor", extra:"https://hosseinb1111.github.io/ping-monitor/"
+  },
+  {
+    id:"groq-telegram-bot", name:"Groq Telegram Bot", category:"AI", icon:"BOT", group:"AI",
+    description:"Telegram AI bot experiment built around conversational AI, external API integration, streaming, image understanding, web search, tool calling, conversation memory, rate limiting and webhook deduplication.",
+    stack:["Telegram Bot API","Groq","AI"],
+    details:["Conversational AI","Telegram Bot API","External API integration","Streaming","Image understanding","Web search","Tool calling","Conversation memory","Rate limiting","Webhook deduplication"],
+    live:"", source:"https://github.com/hosseinb1111/groq-telegram-bot"
+  },
+  {
+    id:"cloudflare-ai", name:"Cloudflare AI", category:"AI", icon:"CF", group:"AI",
+    description:"Cloudflare-based AI chat application with streaming, Markdown, code highlighting, conversation history, memory management, web search, image uploads, exports, multilingual UI, JWT authentication and rate limiting.",
+    stack:["Workers","KV","Workers AI","Vanilla JS"],
+    details:["Streaming AI responses","Markdown rendering","Code highlighting","Stop / resume","Conversation history","Automatic titles","Persistent memory","Memory management","Web search","Image uploads","Drag and drop","Conversation search","Exports","Dark / light mode","English / Persian","JWT authentication","User data isolation","Rate limiting","Meta Llama 4 Scout"],
+    live:"", source:"https://github.com/hosseinb1111/cloudflare-based-AI"
+  },
+  {
+    id:"cloudflare-tg-ai", name:"Cloudflare Telegram AI", category:"AI", icon:"TG", group:"EDGE / CLOUD",
+    description:"Cloudflare-hosted AI Telegram system exploring LLM integration, conversation memory, web search, search classification, multimodal handling, continuation of long responses, Telegram rich messages, administration and Cloudflare storage.",
+    stack:["Cloudflare Workers","Telegram","LLM"],
+    details:["Telegram AI bot","Cloudflare Workers","LLM integration","Conversation memory","Web search","Search classification","Multimodal handling","Long-response continuation","Telegram rich messages","Administration / broadcasting","Cloudflare storage"],
+    live:"", source:"https://github.com/hosseinb1111/tg-AI-bot-cloudflare-hosted-OSS-120B"
+  },
+  {
+    id:"stack-master", name:"Stack Master", category:"GAME", icon:"3D", group:"EXPERIMENT",
+    description:"Browser game / technical experiment using 3D stacking mechanics, camera behavior, responsive interaction and graceful WebGL failure handling.",
+    stack:["JavaScript","Three.js","GSAP"], details:["3D stacking","Camera behavior","Responsive interaction","Graceful WebGL failure handling"],
+    live:"https://stack-master.hossein.my.id/", source:"https://github.com/hosseinb1111/Stack-Master"
+  },
+  {
+    id:"random-adventure", name:"Random Adventure Generator", category:"EXPERIMENT", icon:"RNG", group:"EXPERIMENT",
+    description:"Small serverless interactive experiment with randomized adventure generation, a Cloudflare Worker, mobile-oriented layout, animated cursor, loading state and randomized visual behavior.",
+    stack:["Cloudflare Worker","JavaScript","Web"], details:["Randomized adventures","Cloudflare Worker","Mobile-oriented layout","Animated cursor","Loading state","Randomized visual behavior","Self-contained implementation"],
+    live:"https://random-adventure-generator.hossein.my.id/", source:"https://github.com/hosseinb1111/Random-Adventure-Generator"
+  },
+  {
+    id:"cool-ui-chat", name:"Cool UI Chat Website", category:"EXPERIMENT", icon:"UI", group:"WEB",
+    description:"Realtime chat interface experiment associated with Supabase, edits, deletes, replies, reactions and responsive interface behavior.",
+    stack:["Supabase","Realtime","JavaScript"], details:["Realtime messaging","Supabase","Edits","Deletes","Replies","Reactions","Responsive interface"],
+    live:"", source:"https://github.com/hosseinb1111/Cool-UI-chat-website"
+  },
+  {
+    id:"python-downloader", name:"Python Downloader", category:"UTILITY", icon:"PY", group:"EXPERIMENT",
+    description:"Python-based downloader / bot utility experiment.", stack:["Python"], details:["Downloader experiment","Python","Bot utility"], live:"", source:"https://github.com/hosseinb1111/python-downloader1"
+  },
+  {
+    id:"motivation", name:"Motivation", category:"WEB", icon:"MOT", group:"WEB",
+    description:"Bilingual motivational quote generator with English / Persian support, persisted dark mode, visual cards, animations and loading effects.", stack:["JavaScript","HTML","CSS"], details:["English / Persian","Dark mode persistence","Visual card interface","Animations","Loading effects"], live:"", source:"https://github.com/hosseinb1111/motivation"
+  },
+  {
+    id:"snake", name:"Snake Game", category:"GAME", icon:"SNAK", group:"GAME",
+    description:"Snake Game web version from the portfolio archive.", stack:["Web","Game"], details:["Browser game","Interactive controls"], live:"", source:"https://github.com/Hosseinb1111"
+  },
+  {
+    id:"daily-boost", name:"Daily Boost", category:"WEB", icon:"DB", group:"WEB",
+    description:"Web project from the portfolio archive. Technical details are intentionally kept minimal here rather than inferred.", stack:["Web"], details:["Portfolio archive project"], live:"", source:"https://github.com/Hosseinb1111"
+  },
+  {
+    id:"http-204", name:"HTTP 204", category:"NETWORK", icon:"204", group:"NETWORK",
+    description:"Small HTTP 204 ping endpoint from the portfolio archive.", stack:["HTTP","Network"], details:["HTTP 204 endpoint"], live:"https://204.hossein.my.id/", source:"https://github.com/Hosseinb1111"
+  },
+  {
+    id:"ping", name:"Ping", category:"NETWORK", icon:"PNG", group:"NETWORK",
+    description:"Small network utility from the portfolio archive.", stack:["Network"], details:["Ping utility"], live:"https://ping.hossein.my.id/", source:"https://github.com/Hosseinb1111"
+  }
+];
+
+const APPS = [
+  {id:"about",name:"System Information",short:"about",glyph:"SYS",desc:"Identity, education, focus and direction.",w:670,h:560},
+  {id:"projects",name:"Projects",short:"projects",glyph:"02",desc:"Installed projects, labs and experiments.",w:920,h:670},
+  {id:"ai-lab",name:"AI Lab",short:"ai lab",glyph:"AI",desc:"AI projects and the conceptual application path.",w:760,h:610},
+  {id:"edge-lab",name:"Edge Lab",short:"edge lab",glyph:"EDGE",desc:"Cloudflare, edge and serverless systems.",w:760,h:620},
+  {id:"realtime-lab",name:"Realtime Lab",short:"realtime",glyph:"RT",desc:"Messaging and WebSocket-oriented work.",w:760,h:600},
+  {id:"network",name:"Network Monitor",short:"network",glyph:"NET",desc:"Ping Monitor, HTTP timing and browser networking.",w:790,h:650},
+  {id:"files",name:"File Explorer",short:"files",glyph:"FS",desc:"A portfolio filesystem mapped to real work.",w:780,h:610},
+  {id:"experiments",name:"Experiments",short:"experiments",glyph:"LAB",desc:"Smaller experiments, games and utilities.",w:820,h:650},
+  {id:"terminal",name:"Terminal",short:"terminal",glyph:">_",desc:"A functional portfolio command line.",w:740,h:520},
+  {id:"github",name:"GitHub",short:"github",glyph:"GH",desc:"Live profile and public repositories.",w:780,h:630},
+  {id:"web",name:"Portfolio / Web",short:"web",glyph:"WWW",desc:"Public portfolio and language links.",w:600,h:450},
+  {id:"settings",name:"Settings",short:"settings",glyph:"CFG",desc:"Theme, motion, language and system links.",w:650,h:560},
+  {id:"contact",name:"Contact",short:"contact",glyph:"@",desc:"Public ways to reach Hossein.",w:570,h:430},
+  {id:"timeline",name:"Project Timeline",short:"timeline",glyph:"TL",desc:"A factual development progression without invented dates.",w:700,h:610},
+  {id:"system-log",name:"System Log",short:"logs",glyph:"LOG",desc:"Aesthetic OS log — not production telemetry.",w:700,h:520},
+  {id:"readme",name:"README Viewer",short:"readme",glyph:"MD",desc:"How HOSSEIN OS is meant to be explored.",w:650,h:520}
+];
+
+const DESKTOP_APPS = ["about","projects","ai-lab","edge-lab","realtime-lab","network","files","experiments","terminal","github","web"];
+
+const GROUPS = [
+  ["FLAGSHIP", ["system-ai","wirechat"]],
+  ["AI", ["live-messenger","groq-telegram-bot","cloudflare-ai","cloudflare-tg-ai"]],
+  ["REALTIME", ["live-messenger","wirechat","cool-ui-chat"]],
+  ["EDGE / CLOUD", ["file-to-link","wirechat","system-ai","cloudflare-ai","cloudflare-tg-ai","random-adventure"]],
+  ["WEB", ["system-ai","cool-ui-chat","motivation","daily-boost"]],
+  ["NETWORK", ["ping-monitor","http-204","ping"]],
+  ["UTILITY", ["file-to-link","python-downloader"]],
+  ["EXPERIMENT", ["stack-master","random-adventure","cool-ui-chat","motivation","python-downloader"]],
+  ["GAME", ["stack-master","snake"]]
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  windows:new Map(),
+  z:100,
+  theme:localStorage.getItem("hossein-os-theme") || "dark",
+  motion:localStorage.getItem("hossein-os-motion") !== "off",
+  language:localStorage.getItem("hossein-os-language") || "en",
+  projectFilter:"ALL",
+  projectQuery:"",
+  filePath:"/home/hossein/",
+  selectedTree:"home",
+  bootDone:false,
+  log:[]
+};
+
+/* ============================================================
+   DOM / UTILITIES
+   ============================================================ */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const desktop = $("#desktop");
+const tasks = $("#tasks");
+
+function escapeHtml(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function appById(id){return APPS.find(a=>a.id===id)}
+function projectById(id){return PROJECTS.find(p=>p.id===id)}
+function appIcon(id){const a=appById(id);return a?a.glyph:"?"}
+function notify(title,msg,type="info"){
+  const box=$("#toasts");
+  const toast=document.createElement("div");toast.className=`toast ${type}`;
+  toast.innerHTML=`<strong>${escapeHtml(title)}</strong><p>${escapeHtml(msg)}</p>`;
+  box.appendChild(toast);
+  setTimeout(()=>toast.remove(),3500);
+}
+function log(kind,message){
+  const d=new Date();
+  state.log.push({time:d.toLocaleTimeString([], {hour12:false}),kind,message});
+  if(state.log.length>80) state.log.shift();
+}
+function openExternal(url){if(url) window.open(url,"_blank","noopener,noreferrer")}
+
+/* ============================================================
+   LANGUAGE / THEME
+   ============================================================ */
+const TEXT = {
+  en:{system:"system online",ready:"ready",hint:"double-click / tap an app · drag windows · terminal: type help"},
+  fa:{system:"سیستم آنلاین است",ready:"آماده",hint:"روی برنامه دوبار کلیک کنید · پنجره‌ها را جابه‌جا کنید · در ترمینال help را بنویسید"}
+};
+function applyPrefs(){
+  document.documentElement.dataset.theme=state.theme;
+  document.documentElement.lang=state.language;
+  $("#desktopStatusText").textContent=TEXT[state.language].system;
+  $("#trayStatusText").textContent=TEXT[state.language].ready;
+  $("#desktopHint").innerHTML=state.language==="fa"?TEXT.fa.hint:TEXT.en.hint;
+  document.querySelector('meta[name="theme-color"]').setAttribute("content",state.theme==="dark"?"#070b12":"#eef3f8");
+}
+function setTheme(theme){
+  state.theme=theme;localStorage.setItem("hossein-os-theme",theme);applyPrefs();log("UI","Theme switched to "+theme);notify("Settings","Theme changed to "+theme,"good");
+}
+function setLanguage(lang){
+  state.language=lang;localStorage.setItem("hossein-os-language",lang);applyPrefs();notify("Language",lang==="fa"?"نمایش فارسی فعال شد":"English interface active","good");
+}
+applyPrefs();
+
+/* ============================================================
+   DESKTOP / LAUNCHER
+   ============================================================ */
+function renderDesktopIcons(){
+  const box=$("#desktopIcons");box.innerHTML="";
+  DESKTOP_APPS.forEach(id=>{
+    const a=appById(id);if(!a)return;
+    const b=document.createElement("button");b.className="icon";b.dataset.app=id; b.setAttribute("aria-label",a.name);
+    b.innerHTML=`<span class="icon-glyph">${escapeHtml(a.glyph)}</span><span class="icon-name">${escapeHtml(a.name)}</span>`;
+    b.addEventListener("dblclick",()=>openApp(id));
+    b.addEventListener("click",()=>{
+      $$(".icon.selected").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");
+      const now=Date.now();const prev=box.dataset.lastId;const last=Number(box.dataset.lastTime||0);
+      if(prev===id && now-last<400) openApp(id);box.dataset.lastId=id;box.dataset.lastTime=String(now);
+    });
+    box.appendChild(b);
+  });
+}
+function launcherItems(){
+  const appItems=APPS.map(a=>({type:"app",id:a.id,title:a.name,desc:a.desc,glyph:a.glyph}));
+  const projectItems=PROJECTS.slice(0,10).map(p=>({type:"project",id:p.id,title:p.name,desc:p.category+" · "+p.stack.join(" · "),glyph:p.icon}));
+  return [...appItems,...projectItems];
+}
+function renderLauncher(query=""){
+  const q=query.trim().toLowerCase();
+  const items=launcherItems().filter(i=>!q || (i.title+" "+i.desc).toLowerCase().includes(q));
+  const box=$("#launcherGrid");box.innerHTML="";
+  items.forEach(i=>{
+    const b=document.createElement("button");b.className="launcher-item";
+    b.innerHTML=`<span class="g">${escapeHtml(i.glyph)}</span><span class="n">${escapeHtml(i.title)}</span><span class="d">${escapeHtml(i.desc)}</span>`;
+    b.addEventListener("click",()=>{if(i.type==="app")openApp(i.id);else openProject(i.id);closeLauncher()});box.appendChild(b);
+  });
+  if(!items.length) box.innerHTML='<div class="mono-small" style="grid-column:1/-1;padding:12px">No matching applications or projects.</div>';
+}
+function closeLauncher(){$("#startmenu").classList.remove("open");$("#startbtn").classList.remove("on")}
+function toggleLauncher(){const openNow=$("#startmenu").classList.toggle("open");$("#startbtn").classList.toggle("on",openNow);if(openNow){renderLauncher($("#launcherSearch").value);setTimeout(()=>$("#launcherSearch").focus(),20)}}
+$("#startbtn").addEventListener("click",e=>{e.stopPropagation();toggleLauncher()});
+document.addEventListener("click",e=>{if(!$("#startmenu").contains(e.target)&&e.target!==$("#startbtn"))closeLauncher()});
+$("#launcherSearch").addEventListener("input",e=>renderLauncher(e.target.value));
+
+/* ============================================================
+   WINDOW MANAGER
+   ============================================================ */
+function focusWindow(win){
+  $$(".win").forEach(w=>w.classList.remove("focused"));
+  win.classList.add("focused");win.style.zIndex=++state.z;
+  const id=win.dataset.app;
+  $$(".task").forEach(t=>t.classList.toggle("active",t.dataset.app===id));
+}
+function makeTask(id,win){
+  const a=appById(id);const b=document.createElement("button");b.className="task active";b.dataset.app=id;b.innerHTML=`<span class="task-glyph">${escapeHtml(a.glyph)}</span><span>${escapeHtml(a.name)}</span>`;
+  b.addEventListener("click",()=>{const entry=state.windows.get(id);if(!entry)return;if(entry.win.classList.contains("min")){entry.win.classList.remove("min");focusWindow(entry.win)}else if(entry.win.classList.contains("focused")){entry.win.classList.add("min")}else focusWindow(entry.win)});
+  tasks.appendChild(b);return b;
+}
+function openApp(id){
+  const a=appById(id);if(!a)return;
+  if(state.windows.has(id)){const e=state.windows.get(id);e.win.classList.remove("min");focusWindow(e.win);return}
+  const win=document.createElement("section");win.className="win focused";win.dataset.app=id;win.style.width=a.w+"px";win.style.height=a.h+"px";
+  const offset=state.windows.size*22;win.style.left=Math.max(18,(window.innerWidth-a.w)/2+offset-44)+"px";win.style.top=Math.max(18,(window.innerHeight-a.h)/2+offset-46)+"px";
+  win.innerHTML=`
+    <div class="win-header">
+      <div class="win-controls" role="group" aria-label="Window controls">
+        <button class="win-control close" data-act="close" aria-label="Close"></button>
+        <button class="win-control minimize" data-act="min" aria-label="Minimize"></button>
+        <button class="win-control maximize" data-act="max" aria-label="Maximize"></button>
+      </div>
+      <span class="win-icon">${escapeHtml(a.glyph)}</span>
+      <span class="win-title">${escapeHtml(a.name)}</span>
+    </div>
+    <div class="win-body"></div>
+    <div class="win-resize" aria-hidden="true"></div>`;
+  desktop.appendChild(win);
+  const task=makeTask(id,win);
+  state.windows.set(id,{win,task});
+  renderApp(id,win.querySelector(".win-body"));
+  focusWindow(win);
+  win.querySelector(".win-controls").addEventListener("click",e=>{const act=e.target.dataset.act;if(act==="close")closeApp(id);if(act==="min")win.classList.add("min");if(act==="max")win.classList.toggle("max")});
+  makeDraggable(win,win.querySelector(".win-header"));
+  makeResizable(win,win.querySelector(".win-resize"));
+  win.addEventListener("pointerdown",()=>focusWindow(win),true);
+  log("UI","Opened "+a.name); closeLauncher();
+}
+function closeApp(id){const e=state.windows.get(id);if(!e)return;e.win.remove();e.task.remove();state.windows.delete(id);log("UI","Closed "+id)}
+function openProject(id){
+  const p=projectById(id);if(!p)return;
+  const existing=[...state.windows.entries()].find(([k])=>k.startsWith("project:" ) && k.split(":")[1]===id);
+  if(existing){existing[1].win.classList.remove("min");focusWindow(existing[1].win);return}
+  const wid="project:"+id;const a={id:wid,name:p.name,glyph:p.icon,w:720,h:620};
+  const win=document.createElement("section");win.className="win focused";win.dataset.app=wid;win.style.width=a.w+"px";win.style.height=a.h+"px";const offset=state.windows.size*18;win.style.left=Math.max(14,(window.innerWidth-a.w)/2+offset-34)+"px";win.style.top=Math.max(14,(window.innerHeight-a.h)/2+offset-34)+"px";
+  win.innerHTML=`<div class="win-header"><div class="win-controls"><button class="win-control close" data-act="close" aria-label="Close"></button><button class="win-control minimize" data-act="min" aria-label="Minimize"></button><button class="win-control maximize" data-act="max" aria-label="Maximize"></button></div><span class="win-icon">${escapeHtml(p.icon)}</span><span class="win-title">${escapeHtml(p.name)}</span></div><div class="win-body"></div><div class="win-resize"></div>`;
+  desktop.appendChild(win);
+  const task=document.createElement("button");task.className="task active";task.dataset.app=wid;task.innerHTML=`<span class="task-glyph">${escapeHtml(p.icon)}</span><span>${escapeHtml(p.name)}</span>`;task.addEventListener("click",()=>{const e=state.windows.get(wid);if(!e)return;if(e.win.classList.contains("min")){e.win.classList.remove("min");focusWindow(e.win)}else if(e.win.classList.contains("focused")){e.win.classList.add("min")}else focusWindow(e.win)});tasks.appendChild(task);state.windows.set(wid,{win,task});
+  renderProjectDetails(win.querySelector(".win-body"),p);focusWindow(win);win.querySelector(".win-controls").addEventListener("click",e=>{const act=e.target.dataset.act;if(act==="close")closeApp(wid);if(act==="min")win.classList.add("min");if(act==="max")win.classList.toggle("max")});makeDraggable(win,win.querySelector(".win-header"));makeResizable(win,win.querySelector(".win-resize"));win.addEventListener("pointerdown",()=>focusWindow(win),true);log("PROJECT","Opened "+p.name);closeLauncher();
+}
+function makeDraggable(win,handle){let active=false,sx=0,sy=0,ox=0,oy=0;handle.addEventListener("pointerdown",e=>{if(e.target.closest(".win-controls")||win.classList.contains("max"))return;active=true;handle.classList.add("drag");handle.setPointerCapture(e.pointerId);const r=win.getBoundingClientRect();sx=e.clientX;sy=e.clientY;ox=r.left;oy=r.top;focusWindow(win)});handle.addEventListener("pointermove",e=>{if(!active)return;const nx=ox+e.clientX-sx,ny=oy+e.clientY-sy;win.style.left=Math.max(-win.offsetWidth+90,Math.min(window.innerWidth-80,nx))+"px";win.style.top=Math.max(0,Math.min(window.innerHeight-64,ny))+"px"});const stop=e=>{if(!active)return;active=false;handle.classList.remove("drag");try{handle.releasePointerCapture(e.pointerId)}catch(_){}};handle.addEventListener("pointerup",stop);handle.addEventListener("pointercancel",stop)}
+function makeResizable(win,handle){let active=false,sx=0,sy=0,ow=0,oh=0;handle.addEventListener("pointerdown",e=>{if(win.classList.contains("max"))return;active=true;handle.setPointerCapture(e.pointerId);sx=e.clientX;sy=e.clientY;ow=win.offsetWidth;oh=win.offsetHeight;e.stopPropagation()});handle.addEventListener("pointermove",e=>{if(!active)return;win.style.width=Math.max(290,ow+e.clientX-sx)+"px";win.style.height=Math.max(190,oh+e.clientY-sy)+"px"});const stop=e=>{if(!active)return;active=false;try{handle.releasePointerCapture(e.pointerId)}catch(_){}};handle.addEventListener("pointerup",stop);handle.addEventListener("pointercancel",stop)}
+
+/* ============================================================
+   APP RENDERERS
+   ============================================================ */
+function renderApp(id,b){
+  const renderers={
+    about:renderAbout,projects:renderProjects,"ai-lab":renderAILab,"edge-lab":renderEdgeLab,"realtime-lab":renderRealtimeLab,network:renderNetwork,files:renderFiles,experiments:renderExperiments,terminal:renderTerminal,github:renderGitHub,web:renderWeb,settings:renderSettings,contact:renderContact,timeline:renderTimeline,"system-log":renderSystemLog,readme:renderReadme
+  };
+  if(renderers[id]) renderers[id](b); else b.innerHTML='<div class="app-title">Unknown application</div>';
+}
+function renderAbout(b){
+  b.innerHTML=`
+    <div class="app-kicker">SYSTEM INFORMATION / 01</div>
+    <h2 class="app-title">Hossein Seyed Bagheri</h2>
+    <p class="app-sub">Computer Engineering student and developer focused on practical software, web applications, AI-powered tools, Cloudflare edge systems, realtime applications, APIs and developer-oriented experiments.</p>
+    <div class="stat-grid"><div class="stat-card"><div class="n">WEB</div><div class="l">primary surface</div></div><div class="stat-card"><div class="n">AI</div><div class="l">active direction</div></div><div class="stat-card"><div class="n">EDGE</div><div class="l">cloud theme</div></div><div class="stat-card"><div class="n">RT</div><div class="l">systems theme</div></div></div>
+    <div class="section-label">Identity</div>
+    <div class="kv"><div class="k">Name</div><div class="v">Hossein Seyed Bagheri</div><div class="k">Role</div><div class="v">Computer Engineering Student &amp; Developer</div><div class="k">GitHub</div><div class="v"><a href="${LINKS.github}" target="_blank" rel="noopener">@Hosseinb1111</a></div><div class="k">Website</div><div class="v"><a href="${LINKS.portfolio}" target="_blank" rel="noopener">hossein.my.id</a></div><div class="k">Persian</div><div class="v"><a href="${LINKS.persian}" target="_blank" rel="noopener">fa.hossein.my.id</a></div></div>
+    <div class="section-label">Current direction</div>
+    <div class="tag-row"><span class="tag">JavaScript / TypeScript</span><span class="tag">Backend architecture</span><span class="tag">Cloudflare Workers</span><span class="tag">Databases / data modeling</span><span class="tag">Realtime systems</span><span class="tag">AI application development</span><span class="tag">APIs</span><span class="tag">Software architecture</span><span class="tag">Performance</span><span class="tag">Reliability</span><span class="tag">Deployment</span></div>
+    <div class="section-label">Education</div>
+    <div class="panel"><h3>Computer Engineering Student</h3><p>No university ranking, GPA, awards or certifications are claimed here.</p></div>
+    <div class="section-label">Developer philosophy</div>
+    <div class="panel"><div class="mono-small" style="font-size:12px;color:var(--text-soft)">Idea → Research → Architecture → Implementation → Debugging → Deployment → Failure → Understanding → Improvement</div></div>`;
+}
+function renderProjects(b){
+  b.innerHTML=`<div class="app-kicker">PROJECTS / INSTALLED WORK</div><h2 class="app-title">Projects</h2><p class="app-sub">Treat each project like an installed application: open it, inspect the technical details, and launch the public version or source when available.</p><div class="project-toolbar"><div class="project-filter" id="projectFilters"></div><input class="project-search" id="projectSearch" placeholder="search projects, stacks, categories…" autocomplete="off"></div><div id="projectBrowser"></div>`;
+  const filterBox=b.querySelector("#projectFilters");["ALL","FLAGSHIP","AI","REALTIME","EDGE / CLOUD","WEB","NETWORK","UTILITY","EXPERIMENT","GAME"].forEach(x=>{const btn=document.createElement("button");btn.className="filter"+(state.projectFilter===x?" active":"");btn.textContent=x;btn.addEventListener("click",()=>{state.projectFilter=x;renderProjects(b)});filterBox.appendChild(btn)});
+  b.querySelector("#projectSearch").value=state.projectQuery;b.querySelector("#projectSearch").addEventListener("input",e=>{state.projectQuery=e.target.value;drawProjectBrowser(b.querySelector("#projectBrowser"))});drawProjectBrowser(b.querySelector("#projectBrowser"));
+}
+function drawProjectBrowser(box){
+  const q=state.projectQuery.trim().toLowerCase();const visible=PROJECTS.filter(p=>(state.projectFilter==="ALL"||p.category===state.projectFilter||p.group===state.projectFilter)&&(!q||(p.name+" "+p.category+" "+p.description+" "+p.stack.join(" ")+" "+p.details.join(" ")).toLowerCase().includes(q)));
+  const groups=[];GROUPS.forEach(([title,ids])=>{const arr=visible.filter(p=>ids.includes(p.id));if(arr.length)groups.push([title,arr])});
+  box.innerHTML=groups.length?groups.map(([title,arr])=>`<section class="project-group"><div class="project-group-title">${escapeHtml(title)}</div><div class="project-list">${arr.map(projectCard).join("")}</div></section>`).join(""):`<div class="panel"><p>No projects match the current filter.</p></div>`;
+  $$(".project-card",box).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
+}
+function projectCard(p){return `<article class="project-card" data-project="${escapeHtml(p.id)}"><div class="top"><div><div class="cat">${escapeHtml(p.category)}</div><h3>${escapeHtml(p.name)}</h3></div><span class="icon">${escapeHtml(p.icon)}</span></div><p>${escapeHtml(p.description)}</p><div class="tag-row stack">${p.stack.map(s=>`<span class="tag">${escapeHtml(s)}</span>`).join("")}</div><div class="arrow">↗</div></article>`}
+function renderProjectDetails(b,p){
+  b.innerHTML=`<div class="app-kicker">${escapeHtml(p.category)} / PROJECT</div><h2 class="app-title">${escapeHtml(p.name)}</h2><p class="app-sub">${escapeHtml(p.description)}</p>
+    <div class="section-label">Overview</div><div class="panel"><p>${escapeHtml(p.description)}</p></div>
+    <div class="section-label">Technology</div><div class="tag-row">${p.stack.map(s=>`<span class="tag">${escapeHtml(s)}</span>`).join("")}</div>
+    <div class="section-label">Features / documented details</div><div class="list">${p.details.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</div>
+    ${p.note?`<div class="section-label">Technical note</div><div class="panel"><p>${escapeHtml(p.note)}</p></div>`:""}
+    ${p.architecture?`<div class="section-label">Architecture sketch</div><div class="map">${p.architecture.map((x,i)=>`${i?'<div class="map-arrow">→</div>':''}<div class="map-node"><strong>${escapeHtml(x)}</strong><span>conceptual</span></div>`).join("")}</div><div class="mono-small" style="margin-top:7px">Illustrative relationship, not a production telemetry view.</div>`:""}
+    <div class="section-label">Links</div><div class="btn-row">${p.live?`<a class="btn" href="${p.live}" target="_blank" rel="noopener">Open live ↗</a>`:""}${p.extra?`<a class="btn secondary" href="${p.extra}" target="_blank" rel="noopener">Standalone ↗</a>`:""}${p.source?`<a class="btn secondary" href="${p.source}" target="_blank" rel="noopener">Source ↗</a>`:""}</div>`;
+}
+function renderAILab(b){
+  const ai=PROJECTS.filter(p=>p.category==="AI"||p.id==="system-ai");
+  b.innerHTML=`<div class="app-kicker">AI LAB / APPLICATION MAP</div><h2 class="app-title">AI Lab</h2><p class="app-sub">A map of the AI-related work represented in the portfolio. The flow below is conceptual: individual projects differ in implementation details.</p>
+    <div class="map"><div class="map-node"><strong>USER</strong><span>web / telegram</span></div><div class="map-arrow">→</div><div class="map-node"><strong>APP LOGIC</strong><span>routing / state</span></div><div class="map-arrow">→</div><div class="map-node"><strong>LLM / AI API</strong><span>model integration</span></div></div>
+    <div class="map" style="margin-top:6px"><div class="map-node"><strong>TOOLS / SEARCH</strong><span>where documented</span></div><div class="map-arrow">→</div><div class="map-node"><strong>STORAGE</strong><span>memory / data</span></div><div class="map-arrow">→</div><div class="map-node"><strong>RESPONSE</strong><span>stream / render</span></div></div>
+    <div class="section-label">Recurring interests</div><div class="tag-row"><span class="tag">LLM APIs</span><span class="tag">OpenRouter</span><span class="tag">Groq</span><span class="tag">Telegram Bot API</span><span class="tag">Web search</span><span class="tag">Image understanding</span><span class="tag">Memory</span><span class="tag">Tool calling</span><span class="tag">Automation</span></div>
+    <div class="section-label">Projects</div><div class="project-list">${ai.map(projectCard).join("")}</div>`;
+  $$(".project-card",b).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
+}
+function renderEdgeLab(b){
+  const edge=PROJECTS.filter(p=>["file-to-link","wirechat","system-ai","cloudflare-ai","cloudflare-tg-ai","ping-monitor","random-adventure"].includes(p.id));
+  b.innerHTML=`<div class="app-kicker">EDGE LAB / CLOUDFLARE</div><h2 class="app-title">Edge Lab</h2><p class="app-sub">Cloudflare is a recurring theme across Hossein's work: Workers, Durable Objects, KV, D1, WebSockets and serverless / edge application patterns.</p>
+    <div class="stat-grid"><div class="stat-card"><div class="n">Workers</div><div class="l">edge runtime</div></div><div class="stat-card"><div class="n">DO</div><div class="l">realtime state</div></div><div class="stat-card"><div class="n">KV</div><div class="l">storage</div></div><div class="stat-card"><div class="n">WS</div><div class="l">live connections</div></div></div>
+    <div class="section-label">Active area</div><div class="panel"><h3>Cloudflare / edge systems</h3><p>An area of active development and experimentation — not a claim of expert status.</p></div>
+    <div class="section-label">Related work</div><div class="project-list">${edge.map(projectCard).join("")}</div>`;
+  $$(".project-card",b).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
+}
+function renderRealtimeLab(b){
+  const rt=PROJECTS.filter(p=>["wirechat","live-messenger","cool-ui-chat"].includes(p.id));
+  b.innerHTML=`<div class="app-kicker">REALTIME LAB / LIVE SYSTEMS</div><h2 class="app-title">Realtime Lab</h2><p class="app-sub">Messaging, WebSockets, rooms, state synchronization and UI behavior across the realtime-oriented projects.</p>
+    <div class="event-list"><div class="event"><span class="e">CONNECTED</span><span class="t">Conceptual event stream</span></div><div class="event"><span class="e">MESSAGE_RECEIVED</span><span class="t">A message enters application state</span></div><div class="event"><span class="e">STATE_UPDATED</span><span class="t">Clients synchronize state</span></div><div class="event"><span class="e">TYPING</span><span class="t">Live interaction signal</span></div><div class="event"><span class="e">DISCONNECTED</span><span class="t">Connection lifecycle ends</span></div></div>
+    <div class="mono-small" style="margin-top:9px">The event monitor is a visual representation, not a live telemetry feed.</div>
+    <div class="section-label">Projects</div><div class="project-list">${rt.map(projectCard).join("")}</div>`;
+  $$(".project-card",b).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
+}
+function renderNetwork(b){
+  const p=projectById("ping-monitor");
+  b.innerHTML=`<div class="app-kicker">NETWORK MONITOR / BROWSER MEASUREMENT</div><h2 class="app-title">Ping Monitor</h2><p class="app-sub">An educational network application built around browser-side HTTPS timing. It is deliberately not presented as an ICMP ping service.</p>
+    <div class="stat-grid"><div class="stat-card"><div class="n">HTTPS</div><div class="l">request timing</div></div><div class="stat-card"><div class="n">RT</div><div class="l">latency metrics</div></div><div class="stat-card"><div class="n">JIT</div><div class="l">jitter</div></div><div class="stat-card"><div class="n">CORS</div><div class="l">browser limits</div></div></div>
+    <div class="section-label">What it measures</div><div class="tag-row"><span class="tag">Latency</span><span class="tag">Median</span><span class="tag">Average</span><span class="tag">Best</span><span class="tag">Worst</span><span class="tag">Jitter</span><span class="tag">Success rate</span><span class="tag">Status classification</span><span class="tag">Configurable concurrency</span></div>
+    <div class="section-label">Why fetch timing?</div><div class="panel"><p>Browser networking does not provide OS-level ICMP socket access. This project therefore measures HTTPS fetch timing from the browser.</p></div>
+    <div class="section-label">Concepts</div><div class="app-grid three"><div class="panel"><h3>HTTP / HTTPS</h3><p>Application-layer requests used for timing.</p></div><div class="panel"><h3>DNS / TLS</h3><p>Network stages that can affect observed request timing.</p></div><div class="panel"><h3>CORS</h3><p>Browser security policies can influence what can be measured.</p></div></div>
+    <div class="section-label">Launch</div><div class="btn-row"><a class="btn" href="${p.live}" target="_blank" rel="noopener">Open live Worker ↗</a><a class="btn secondary" href="https://hosseinb1111.github.io/ping-monitor/" target="_blank" rel="noopener">Open standalone ↗</a><a class="btn secondary" href="${p.source}" target="_blank" rel="noopener">Source ↗</a></div>`;
+}
+function renderFiles(b){
+  const tree=[
+    ["home","/home/hossein/",0],
+    ["desktop","Desktop/",1],
+    ["projects","Projects/",1],
+    ["ai","AI/",2],
+    ["realtime","Realtime/",2],
+    ["cloud","Cloud/",2],
+    ["web","Web/",2],
+    ["utilities","Utilities/",2],
+    ["experiments","Experiments/",2],
+    ["labs","Labs/",1],
+    ["about","About/",1],
+    ["contact","Contact/",1]
+  ];
+  const content={
+    home:{name:"/home/hossein/",items:["Desktop","Projects","Labs","About","Contact","README.md"]},
+    desktop:{name:"Desktop/",items:DESKTOP_APPS.map(id=>appById(id)?.name||id)},
+    projects:{name:"Projects/",items:["AI","Realtime","Cloud","Web","Utilities","Experiments"]},
+    ai:{name:"Projects/AI/",items:PROJECTS.filter(p=>p.category==="AI"||p.id==="system-ai").map(p=>p.name)},
+    realtime:{name:"Projects/Realtime/",items:PROJECTS.filter(p=>p.group==="REALTIME").map(p=>p.name)},
+    cloud:{name:"Projects/Cloud/",items:PROJECTS.filter(p=>p.group==="EDGE / CLOUD").map(p=>p.name)},
+    web:{name:"Projects/Web/",items:PROJECTS.filter(p=>p.group==="WEB").map(p=>p.name)},
+    utilities:{name:"Projects/Utilities/",items:PROJECTS.filter(p=>p.category==="UTILITY").map(p=>p.name)},
+    experiments:{name:"Projects/Experiments/",items:PROJECTS.filter(p=>p.group==="EXPERIMENT").map(p=>p.name)},
+    labs:{name:"Labs/",items:["AI Lab","Realtime Lab","Edge Lab","Network Monitor"]},
+    about:{name:"About/",items:["System Information","README.md"]},
+    contact:{name:"Contact/",items:["GitHub","Portfolio","Email"]}
+  };
+  b.innerHTML=`<div class="app-kicker">FILESYSTEM / PORTFOLIO</div><h2 class="app-title">File Explorer</h2><p class="app-sub">A fictional filesystem that maps the portfolio into a navigable workspace. Folders open the corresponding portfolio applications.</p><div class="explorer"><div class="tree" id="fileTree">${tree.map(([id,label,indent])=>`<button class="tree-item ${id===state.selectedTree?"active":""} ${indent?"indent":""}" data-tree="${id}">${escapeHtml(label)}</button>`).join("")}</div><div class="folder-view" id="folderView"></div></div>`;
+  const draw=()=>{
+    const c=content[state.selectedTree]||content.home;const view=b.querySelector("#folderView");view.innerHTML=`<div class="folder-head"><div><div class="app-kicker">PATH</div><h3>${escapeHtml(c.name)}</h3></div><span class="mono-small">${c.items.length} items</span></div><div class="file-grid">${c.items.map(item=>`<button class="file-item" data-file="${escapeHtml(item)}"><div class="fi">${item.includes("/")||!item.includes(".")?"▱":"▤"}</div><strong>${escapeHtml(item)}</strong><span>open / inspect</span></button>`).join("")}</div>`;
+    $$(".file-item",view).forEach(btn=>btn.addEventListener("click",()=>handleFileOpen(state.selectedTree,btn.dataset.file)));
+  };
+  $$(".tree-item",b).forEach(btn=>btn.addEventListener("click",()=>{state.selectedTree=btn.dataset.tree;$$(".tree-item",b).forEach(x=>x.classList.toggle("active",x===btn));draw()}));draw();
+}
+function handleFileOpen(path,name){
+  const appMap={"System Information":"about","AI Lab":"ai-lab","Realtime Lab":"realtime-lab","Edge Lab":"edge-lab","Network Monitor":"network","GitHub":"github","Portfolio":"web","Contact":"contact","README.md":"readme"};
+  if(appMap[name]){openApp(appMap[name]);return}
+  const p=PROJECTS.find(x=>x.name===name);if(p){openProject(p.id);return}
+  if(name.includes("Projects")||name.includes("Labs")){notify("File Explorer",name+" is a folder in the workspace.");return}
+  notify("File Explorer","This entry is conceptual portfolio structure only.");
+}
+function renderExperiments(b){
+  const exp=PROJECTS.filter(p=>p.group==="EXPERIMENT"||p.category==="GAME"||p.category==="UTILITY");
+  b.innerHTML=`<div class="app-kicker">EXPERIMENTS / SMALLER WORK</div><h2 class="app-title">Experiments</h2><p class="app-sub">Smaller projects are kept visible because experimentation is part of the story. They are not inflated into larger systems than they are.</p><div class="project-list">${exp.map(projectCard).join("")}</div><div class="section-label">Why keep them?</div><div class="panel"><p>Small experiments make it easier to test interfaces, rendering, networking, APIs, game mechanics and implementation ideas without pretending every project is a flagship system.</p></div>`;
+  $$(".project-card",b).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
+}
+function renderTerminal(b){
+  b.innerHTML=`<div class="app-kicker">TERMINAL / PORTFOLIO CLI</div><h2 class="app-title">Terminal</h2><p class="app-sub">This is a local portfolio command line. It does not execute system commands.</p><div class="terminal"><div class="terminal-output" id="termout"></div><div class="terminal-input-row"><span class="terminal-prompt">hossein@os:~$</span><input class="terminal-input" id="terminput" autocomplete="off" spellcheck="false" aria-label="Terminal command"></div></div>`;
+  const out=b.querySelector("#termout"),input=b.querySelector("#terminput");
+  const print=(txt,cls="")=>{const d=document.createElement("div");d.className=cls;d.innerHTML=txt;out.appendChild(d);out.scrollTop=out.scrollHeight};
+  print('<span class="cyan">HOSSEIN OS terminal</span> <span class="violet">v1.0</span>');print('Type <span class="cyan">help</span> to list commands.');
+  const cmds={
+    help:()=>print(`help       show commands\nwhoami     system identity\nabout      identity summary\nprojects   list primary projects\nskills     technical areas\nai         AI-related work\ncloud      edge / Cloudflare themes\nrealtime   realtime work\nnetwork    network project\ngithub     open GitHub profile\nopen NAME  open an application or project\ncontact    public contact links\nls         list desktop apps\npwd        show portfolio path\ndate       current time\nclear      clear terminal\nsudo       try something silly`),
+    whoami:()=>print('Hossein\nComputer Engineering student\nDeveloper\nWeb / AI / Edge / Realtime'),
+    about:()=>print('Computer Engineering student building practical software across web applications, AI tools, Cloudflare edge systems, realtime applications, APIs and experiments.'),
+    projects:()=>PROJECTS.slice(0,8).forEach(p=>print(`<span class="cyan">${escapeHtml(p.id)}</span> — ${escapeHtml(p.name)}`)),
+    skills:()=>print('JavaScript · TypeScript · Python · PHP · HTML · CSS · SQL · React · Next.js · APIs · MySQL · Supabase · Cloudflare Workers · Durable Objects · D1 · KV · WebSockets · LLM APIs · Git · GitHub'),
+    ai:()=>print('LLM APIs · OpenRouter · Groq · Telegram Bot API · web search · image understanding · memory · tool calling · automation'),
+    cloud:()=>print('Cloudflare Workers\nDurable Objects\nKV\nD1\nWebSockets\nedge / serverless application patterns'),
+    realtime:()=>print('WireChat\nLive Messenger\nCool UI Chat Website\nWebSockets · rooms · synchronization · messaging'),
+    network:()=>print('Ping Monitor — browser-side HTTPS fetch timing\nHTTP 204 — https://204.hossein.my.id/\nPing — https://ping.hossein.my.id/'),
+    github:()=>{openExternal(LINKS.github);print('Opening GitHub ↗','violet')},
+    contact:()=>{print('GitHub: github.com/Hosseinb1111');print('Portfolio: hossein.my.id');print('Email: hello@hossein.my.id')},
+    ls:()=>print(APPS.map(a=>a.short).join('   ')),
+    pwd:()=>print('/home/hossein/'),
+    date:()=>print(escapeHtml(new Date().toString())),
+    clear:()=>out.innerHTML='',
+    sudo:()=>print('Permission denied. Nice try.','err'),
+    open:(args)=>{
+      const q=args.join(' ').toLowerCase();const a=APPS.find(x=>x.id===q||x.short===q||x.name.toLowerCase()===q);if(a){openApp(a.id);print('opening <span class="cyan">'+escapeHtml(a.name)+'</span>…');return}
+      const p=PROJECTS.find(x=>x.id===q||x.name.toLowerCase()===q);if(p){openProject(p.id);print('opening <span class="cyan">'+escapeHtml(p.name)+'</span>…');return}
+      print('No application or project named '+escapeHtml(q),'err');
+    }
+  };
+  input.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const raw=input.value.trim();input.value="";if(!raw)return;print(`<span class="prompt">hossein@os:~$</span> ${escapeHtml(raw)}`);const [cmd,...args]=raw.split(/\s+/);if(cmds[cmd.toLowerCase()])cmds[cmd.toLowerCase()](args);else print('command not found: '+escapeHtml(cmd),'err')});setTimeout(()=>input.focus(),40);
+}
+function renderGitHub(b){
+  b.innerHTML=`<div class="app-kicker">GITHUB / PUBLIC PROFILE</div><h2 class="app-title">GitHub</h2><p class="app-sub">Live public profile information is retrieved from GitHub when possible. No stars, followers, commits or contribution counts are hardcoded here.</p><div id="githubContent"><div class="panel"><p>Loading public profile…</p></div></div>`;
+  loadGitHub(b.querySelector("#githubContent"));
+}
+async function loadGitHub(box){
+  try{
+    const [userRes,reposRes]=await Promise.all([fetch("https://api.github.com/users/Hosseinb1111",{headers:{Accept:"application/vnd.github+json"}}),fetch("https://api.github.com/users/Hosseinb1111/repos?per_page=100&sort=updated",{headers:{Accept:"application/vnd.github+json"}})]);
+    if(!userRes.ok||!reposRes.ok)throw new Error("GitHub API unavailable");
+    const user=await userRes.json(),repos=await reposRes.json();
+    const publicRepos=Array.isArray(repos)?repos.filter(r=>!r.private):[];
+    box.innerHTML=`<div class="stat-grid"><div class="stat-card"><div class="n">${escapeHtml(user.public_repos)}</div><div class="l">public repositories</div></div><div class="stat-card"><div class="n">${escapeHtml(user.followers)}</div><div class="l">followers</div></div><div class="stat-card"><div class="n">${escapeHtml(user.following)}</div><div class="l">following</div></div><div class="stat-card"><div class="n">${escapeHtml(user.html_url?"LIVE":"—")}</div><div class="l">profile source</div></div></div>
+      <div class="section-label">Profile</div><div class="panel"><h3>${escapeHtml(user.name||"Hossein Seyed Bagheri")}</h3><p>${escapeHtml(user.bio||"Public GitHub profile")}</p><div class="btn-row"><a class="btn" href="${LINKS.github}" target="_blank" rel="noopener">Open profile ↗</a></div></div>
+      <div class="section-label">Recently surfaced repositories</div><div class="project-list">${publicRepos.slice(0,8).map(r=>`<article class="project-card" data-repo="${escapeHtml(r.html_url)}"><div class="top"><div><div class="cat">${escapeHtml(r.language||"repository")}</div><h3>${escapeHtml(r.name)}</h3></div><span class="icon">GH</span></div><p>${escapeHtml(r.description||"No public description.")}</p><div class="tag-row stack"><span class="tag">★ ${escapeHtml(r.stargazers_count)}</span><span class="tag">forks ${escapeHtml(r.forks_count)}</span><span class="tag">updated ${escapeHtml(new Date(r.updated_at).toLocaleDateString())}</span></div></article>`).join("")}</div>`;
+    $$("[data-repo]",box).forEach(x=>x.addEventListener("click",()=>openExternal(x.dataset.repo)));
+    log("GITHUB","Public profile loaded");
+  }catch(err){
+    box.innerHTML=`<div class="panel"><h3>GitHub live data unavailable</h3><p>The browser could not reach the GitHub API right now. The profile and project links are still available directly.</p><div class="btn-row"><a class="btn" href="${LINKS.github}" target="_blank" rel="noopener">Open GitHub ↗</a></div></div>`;
+    log("GITHUB","Live API unavailable");
+  }
+}
+function renderWeb(b){
+  b.innerHTML=`<div class="app-kicker">WEB / PUBLIC SURFACES</div><h2 class="app-title">Portfolio / Web</h2><p class="app-sub">The public web surfaces connected to Hossein's developer identity.</p><div class="app-grid two"><div class="panel"><h3>Primary Portfolio</h3><p>English portfolio and project entry point.</p><div class="btn-row"><a class="btn" href="${LINKS.portfolio}" target="_blank" rel="noopener">Visit portfolio ↗</a></div></div><div class="panel"><h3>Persian Portfolio</h3><p>Persian-language portfolio surface.</p><div class="btn-row"><a class="btn secondary" href="${LINKS.persian}" target="_blank" rel="noopener">Open Persian ↗</a></div></div></div><div class="section-label">Selected live projects</div><div class="app-grid two">${PROJECTS.filter(p=>p.live).map(p=>`<div class="panel"><h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.description)}</p><div class="btn-row"><a class="btn" href="${p.live}" target="_blank" rel="noopener">Open live ↗</a></div></div>`).join("")}</div>`;
+}
+function renderSettings(b){
+  b.innerHTML=`<div class="app-kicker">SYSTEM / SETTINGS</div><h2 class="app-title">Settings</h2><p class="app-sub">Small controls that change the experience without turning the portfolio into a configuration maze.</p><div class="settings-tabs"><button class="settings-tab active" data-tab="appearance">Appearance</button><button class="settings-tab" data-tab="system">System</button></div><div id="settingsPanel"></div>`;
+  const panel=b.querySelector("#settingsPanel");
+  function draw(tab){
+    $$(".settings-tab",b).forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
+    panel.innerHTML=tab==="appearance"?`
+      <div class="setting-row"><div class="copy"><strong>Theme</strong><span>Switch between the dark workstation and light surface.</span></div><select class="select" id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select></div>
+      <div class="setting-row"><div class="copy"><strong>Motion</strong><span>Enable animated transitions and effects.</span></div><button class="switch ${state.motion?"on":""}" id="motionSwitch" aria-label="Toggle motion"></button></div>
+      <div class="setting-row"><div class="copy"><strong>Language</strong><span>Switch interface direction and typography.</span></div><select class="select" id="langSelect"><option value="en">English</option><option value="fa">فارسی</option></select></div>`:`
+      <div class="setting-row"><div class="copy"><strong>GitHub</strong><span>Open the public source profile.</span></div><a class="btn secondary" href="${LINKS.github}" target="_blank" rel="noopener">Open</a></div>
+      <div class="setting-row"><div class="copy"><strong>Portfolio</strong><span>Open the main web portfolio.</span></div><a class="btn secondary" href="${LINKS.portfolio}" target="_blank" rel="noopener">Open</a></div>
+      <div class="setting-row"><div class="copy"><strong>About HOSSEIN OS</strong><span>Read the product notes and design intent.</span></div><button class="btn secondary" id="readmeBtn">Open</button></div>`;
+    const ts=panel.querySelector("#themeSelect");if(ts){ts.value=state.theme;ts.addEventListener("change",e=>setTheme(e.target.value));}
+    const ms=panel.querySelector("#motionSwitch");if(ms)ms.addEventListener("click",()=>{state.motion=!state.motion;localStorage.setItem("hossein-os-motion",state.motion?"on":"off");document.body.dataset.motion=state.motion?"on":"off";ms.classList.toggle("on",state.motion);notify("Motion",state.motion?"Animations enabled":"Animations disabled","good")});
+    const ls=panel.querySelector("#langSelect");if(ls){ls.value=state.language;ls.addEventListener("change",e=>{setLanguage(e.target.value);draw(tab)})}
+    panel.querySelector("#readmeBtn")?.addEventListener("click",()=>openApp("readme"));
+  }
+  b.querySelectorAll(".settings-tab").forEach(t=>t.addEventListener("click",()=>draw(t.dataset.tab)));draw("appearance");
+}
+function renderContact(b){b.innerHTML=`<div class="app-kicker">CONTACT / PUBLIC CHANNELS</div><h2 class="app-title">Get In Touch</h2><p class="app-sub">No agency language, no invented company persona — just the public developer channels.</p><div class="app-grid two"><div class="panel"><h3>GitHub</h3><p>@Hosseinb1111</p><div class="btn-row"><a class="btn" href="${LINKS.github}" target="_blank" rel="noopener">View GitHub ↗</a></div></div><div class="panel"><h3>Portfolio</h3><p>hossein.my.id</p><div class="btn-row"><a class="btn secondary" href="${LINKS.portfolio}" target="_blank" rel="noopener">Visit portfolio ↗</a></div></div></div><div class="section-label">Email / contact</div><div class="panel"><p>${escapeHtml(LINKS.email.replace("mailto:",""))}</p><div class="btn-row"><a class="btn" href="${LINKS.email}">Open email ↗</a></div></div>`}
+function renderTimeline(b){
+  const items=[
+    ["Early experiment","Small web projects and interactive experiments.","small scope · learning by shipping"],
+    ["Experimentation","Games, UI experiments, utilities and browser projects.","interfaces · rendering · interaction"],
+    ["Networking","Network-oriented utilities and browser-side measurements.","HTTP · HTTPS · latency · browser constraints"],
+    ["AI integrations","AI applications, Telegram bots, LLM APIs, search and memory patterns.","AI · APIs · automation"],
+    ["Edge systems","Cloudflare Workers, KV, Durable Objects and serverless patterns become recurring tools.","edge · storage · realtime"],
+    ["Realtime systems","Messaging applications and WebSocket-oriented projects.","rooms · synchronization · state"],
+    ["Current direction","A combined interest in web quality, AI applications, edge infrastructure and practical systems work.","learning · implementation · iteration"]
+  ];
+  b.innerHTML=`<div class="app-kicker">TIMELINE / PROGRESSION</div><h2 class="app-title">Project Timeline</h2><p class="app-sub">No fake dates are used here. This is a qualitative progression based on the portfolio's documented body of work.</p><div class="timeline">${items.map(([when,title,desc])=>`<div class="timeline-item"><div class="timeline-mark"></div><div class="timeline-content"><div class="when">${escapeHtml(when)}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(desc)}</p></div></div>`).join("")}</div>`;
+}
+function renderSystemLog(b){
+  b.innerHTML=`<div class="app-kicker">SYSTEM LOG / AESTHETIC ONLY</div><h2 class="app-title">System Log</h2><p class="app-sub">These entries are generated by the portfolio UI for atmosphere. They are not production infrastructure telemetry.</p><div class="logbox" id="logbox"></div><div class="btn-row"><button class="btn secondary" id="refreshLog">Append event</button><button class="btn danger" id="clearLog">Clear view</button></div>`;drawLog(b.querySelector("#logbox"));b.querySelector("#refreshLog").addEventListener("click",()=>{const samples=[["BOOT","Portfolio module checked"],["EDGE","Cloudflare work mapped"],["AI","AI projects indexed"],["REALTIME","Realtime projects mounted"],["NETWORK","Network tools mounted"],["UI","Interface ready"]];const s=samples[Math.floor(Math.random()*samples.length)];log(s[0],s[1]);drawLog(b.querySelector("#logbox"))});b.querySelector("#clearLog").addEventListener("click",()=>{b.querySelector("#logbox").innerHTML=""})}
+function drawLog(box){const seed=state.log.length?state.log:[{time:new Date().toLocaleTimeString([],{hour12:false}),kind:"BOOT",message:"HOSSEIN OS environment ready"},{time:new Date().toLocaleTimeString([],{hour12:false}),kind:"LOAD",message:"Portfolio modules indexed"},{time:new Date().toLocaleTimeString([],{hour12:false}),kind:"UI",message:"Window manager active"}];box.innerHTML=seed.map(x=>`<div class="logline"><span class="stamp">[${escapeHtml(x.time)}]</span> <span class="kind ${x.kind.toLowerCase()}">${escapeHtml(x.kind)}</span> ${escapeHtml(x.message)}</div>`).join("")}
+function renderReadme(b){b.innerHTML=`<div class="app-kicker">README / HOSSEIN OS</div><h2 class="app-title">How to explore</h2><p class="app-sub">HOSSEIN OS is itself the portfolio project. The desktop metaphor is meant to make the work discoverable, not to hide it behind decoration.</p><div class="code"><span class="cyan">BOOT</span>\n  system identity\n  project index\n  interactive desktop\n\n<span class="cyan">OPEN</span>\n  projects → inspect real work\n  AI Lab → see recurring AI themes\n  Edge Lab → see Cloudflare work\n  Realtime Lab → see messaging systems\n  Network → inspect browser networking concepts\n  Files → browse the portfolio filesystem\n  Terminal → use the local CLI\n\n<span class="cyan">PRINCIPLE</span>\n  Build.\n  Break.\n  Understand.\n  Improve.\n\n<span class="violet">NOTE</span>\n  Content is intentionally factual.\n  This interface does not claim seniority,\n  production scale, awards, users, revenue,\n  or capabilities that are not documented.</div>`}
+
+/* ============================================================
+   CLOCK / LOCK / SHUTDOWN
+   ============================================================ */
+function tick(){const d=new Date(),hh=String(d.getHours()).padStart(2,"0"),mm=String(d.getMinutes()).padStart(2,"0");$("#clock").textContent=hh+":"+mm;$("#lockclock").textContent=hh+":"+mm;$("#lockdate").textContent=d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}
+setInterval(tick,1000);tick();
+const lock=$("#lockscreen"),canvas=$("#lock-canvas"),ctx=canvas.getContext("2d");let stars=[],raf=0,lw=0,lh=0;
+function resizeLock(){const dpr=Math.min(devicePixelRatio||1,2);lw=innerWidth;lh=innerHeight;canvas.width=lw*dpr;canvas.height=lh*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);stars=Array.from({length:110},()=>({x:Math.random()*lw,y:Math.random()*lh,z:.2+Math.random()*.8,r:.4+Math.random()*1.3}))}
+function drawLock(){if(!lock.classList.contains("show")){cancelAnimationFrame(raf);return}ctx.fillStyle=state.theme==="dark"?"rgba(7,11,18,.38)":"rgba(238,243,248,.42)";ctx.fillRect(0,0,lw,lh);for(const s of stars){ctx.beginPath();ctx.fillStyle=`rgba(${state.theme==="dark"?"92,231,255":"0,126,158"},${s.z*.35})`;ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();s.y+=s.z*.3;if(s.y>lh){s.y=0;s.x=Math.random()*lw}}raf=requestAnimationFrame(drawLock)}
+function unlock(){if(!lock.classList.contains("show"))return;lock.classList.remove("show");cancelAnimationFrame(raf);log("SEC","Unlocked")}
+$("#lockbtn").addEventListener("click",()=>{lock.classList.add("show");resizeLock();cancelAnimationFrame(raf);drawLock();log("SEC","Screen locked")});lock.addEventListener("click",unlock);addEventListener("resize",resizeLock);
+const shutdown=$("#shutdown");function showShutdown(){shutdown.classList.add("show");closeLauncher();log("SYSTEM","Shutdown screen opened")}$("#poweron").addEventListener("click",()=>{shutdown.classList.remove("show");log("SYSTEM","Session restarted")});
+
+/* ============================================================
+   KEYBOARD / EASTER EGGS
+   ============================================================ */
+let konami=[],panicClicks=0;
+const KONAMI=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+addEventListener("keydown",e=>{
+  if(!state.bootDone){finishBoot();return}
+  if(lock.classList.contains("show")){unlock();return}
+  if(e.key==="Escape"){closeLauncher();$$(".win.focused").forEach(w=>w.classList.remove("focused"));return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();toggleLauncher();return}
+  if(e.key==="F1"){e.preventDefault();openApp("readme");return}
+  if(e.key==="F10"){e.preventDefault();showShutdown();return}
+  konami.push(e.key);if(konami.length>KONAMI.length)konami.shift();if(konami.join(",")===KONAMI.join(",")){notify("Easter egg","Konami sequence accepted. No production privileges granted.","good");log("EGG","Konami sequence accepted");konami=[]}
+});
+desktop.addEventListener("click",e=>{if(e.target===desktop){panicClicks++;if(panicClicks===7){notify("Developer note","Nothing crashed. You just clicked the wallpaper seven times.","warn");panicClicks=0}}});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+const boot=$("#boot"),bootlog=$("#bootlog"),bootprogress=$("#bootprogress");
+const BOOT_LINES=[
+  ["HOSSEIN OS v1.0 — personal workstation","sys"],
+  ["Initializing interface…","ok"],
+  ["Mounting portfolio workspace…","ok"],
+  ["Indexing projects…","ok"],
+  ["Loading AI systems…","ok"],
+  ["Loading realtime systems…","ok"],
+  ["Connecting edge map…","ok"],
+  ["Mounting experiments…","ok"],
+  ["Starting window manager…","ok"],
+  ["System ready. Welcome.","sys"]
+];
+let bootIndex=0;
+function finishBoot(){if(state.bootDone)return;state.bootDone=true;boot.classList.add("gone");setTimeout(()=>boot.remove(),460);log("BOOT","HOSSEIN OS ready")}
+function bootStep(){if(state.bootDone)return;if(bootIndex>=BOOT_LINES.length){finishBoot();return}const [text,cls]=BOOT_LINES[bootIndex];const d=document.createElement("div");d.className=cls;d.textContent=text;bootlog.appendChild(d);bootprogress.style.width=((bootIndex+1)/BOOT_LINES.length*100)+"%";bootIndex++;setTimeout(bootStep,145+Math.random()*180)}
+boot.addEventListener("click",finishBoot);setTimeout(bootStep,280);
+
+/* ============================================================
+   STARTUP
+   ============================================================ */
+renderDesktopIcons();renderLauncher();
+log("BOOT","Interface initialized");log("LOAD","Portfolio modules indexed");log("EDGE","Cloudflare work mapped");log("AI","AI projects indexed");log("REALTIME","Realtime work indexed");log("NETWORK","Network utilities indexed");
+
+/* Prevent context-menu surprises while preserving keyboard access. */
+document.addEventListener("contextmenu",e=>{if(e.target.closest(".win")||e.target.closest("#desktop"))e.preventDefault()});
+</script>
+</body>
+</html>
