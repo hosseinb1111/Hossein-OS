@@ -766,11 +766,9 @@ Or, in four words:
 
 ---
 
-## 📄 License / ownership
+## 📄 License 
 
-This portfolio interface and its code should be treated as a personal project of **Hossein Seyed Bagheri**. Individual linked projects may have their own repositories, licenses, and terms.
-
-Check the relevant source repository before reusing project-specific code or assets.
+This project is under MIT License feel free to use this code in any way that you like
 
 ---
 
