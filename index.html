@@ -265,6 +265,14 @@ html[data-theme="light"] .desktop-status{background:rgba(255,255,255,.54)}
 
 /* Persian */
 html[lang="fa"] body{font-family:var(--persian);direction:rtl}html[lang="fa"] .win-title,html[lang="fa"] .launcher-footer,html[lang="fa"] .desktop-hint{direction:rtl}html[lang="fa"] .win-header{direction:ltr}html[lang="fa"] .app-sub,html[lang="fa"] .panel p,html[lang="fa"] .project-card p,html[lang="fa"] .list li,html[lang="fa"] .timeline-content p{line-height:1.8}
+
+#wall{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.9}
+#ctxmenu{position:fixed;z-index:9000;min-width:200px;padding:5px;border:1px solid var(--line-strong);background:var(--panel);box-shadow:var(--shadow);display:none}
+#ctxmenu.show{display:block}
+#ctxmenu button{display:flex;width:100%;justify-content:space-between;gap:18px;align-items:center;border:0;background:transparent;padding:8px 10px;font-size:12px;text-align:left;cursor:pointer;color:var(--text-soft)}
+#ctxmenu button:hover,#ctxmenu button:focus-visible{background:var(--panel-3);color:var(--text)}
+#ctxmenu hr{border:0;border-top:1px solid var(--line-soft);margin:4px 2px}
+#ctxmenu kbd{font:inherit;font-size:10px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -279,7 +287,7 @@ html[lang="fa"] body{font-family:var(--persian);direction:rtl}html[lang="fa"] .w
   <div class="boot-skip">click / tap / press any key to skip</div>
 </div>
 
-<main id="desktop" aria-label="HOSSEIN OS desktop">
+<main id="desktop" aria-label="HOSSEIN OS desktop"><canvas id="wall" aria-hidden="true"></canvas>
   <div class="desktop-status"><span class="status-dot"></span><span id="desktopStatusText">system online</span></div>
   <div class="desktop-watermark">HOSSEIN OS</div>
   <div class="icons" id="desktopIcons"></div>
@@ -340,7 +348,7 @@ const LINKS = {
   github: "https://github.com/Hosseinb1111",
   portfolio: "https://hossein.my.id/",
   persian: "https://fa.hossein.my.id/",
-  email: "mailto:hello@hossein.my.id"
+  email: "mailto:hhh13246578@gmail.com"
 };
 
 const PROJECTS = [
@@ -482,12 +490,14 @@ const GROUPS = [
 /* ============================================================
    STATE
    ============================================================ */
+const store={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 const state = {
   windows:new Map(),
   z:100,
-  theme:localStorage.getItem("hossein-os-theme") || "dark",
-  motion:localStorage.getItem("hossein-os-motion") !== "off",
-  language:localStorage.getItem("hossein-os-language") || "en",
+  theme:store.get("hossein-os-theme") || "dark",
+  motion:store.get("hossein-os-motion") !== "off",
+  language:store.get("hossein-os-language") || "en",
+  idle:store.get("hossein-os-idle") !== "off",
   projectFilter:"ALL",
   projectQuery:"",
   filePath:"/home/hossein/",
@@ -537,11 +547,11 @@ function applyPrefs(){
   $("#desktopHint").innerHTML=state.language==="fa"?TEXT.fa.hint:TEXT.en.hint;
   document.querySelector('meta[name="theme-color"]').setAttribute("content",state.theme==="dark"?"#070b12":"#eef3f8");
 }
-function setTheme(theme){
-  state.theme=theme;localStorage.setItem("hossein-os-theme",theme);applyPrefs();log("UI","Theme switched to "+theme);notify("Settings","Theme changed to "+theme,"good");
+function setTheme(theme){setTimeout(()=>window.wallSync&&wallSync(),0);
+  state.theme=theme;store.set("hossein-os-theme",theme);applyPrefs();log("UI","Theme switched to "+theme);notify("Settings","Theme changed to "+theme,"good");
 }
 function setLanguage(lang){
-  state.language=lang;localStorage.setItem("hossein-os-language",lang);applyPrefs();notify("Language",lang==="fa"?"نمایش فارسی فعال شد":"English interface active","good");
+  state.language=lang;store.set("hossein-os-language",lang);applyPrefs();notify("Language",lang==="fa"?"نمایش فارسی فعال شد":"English interface active","good");
 }
 applyPrefs();
 
@@ -594,52 +604,44 @@ function focusWindow(win){
   const id=win.dataset.app;
   $$(".task").forEach(t=>t.classList.toggle("active",t.dataset.app===id));
 }
-function makeTask(id,win){
-  const a=appById(id);const b=document.createElement("button");b.className="task active";b.dataset.app=id;b.innerHTML=`<span class="task-glyph">${escapeHtml(a.glyph)}</span><span>${escapeHtml(a.name)}</span>`;
+function makeTask(id,win,meta){
+  const a=meta||appById(id);const b=document.createElement("button");b.className="task active";b.dataset.app=id;b.innerHTML=`<span class="task-glyph">${escapeHtml(a.glyph)}</span><span>${escapeHtml(a.name)}</span>`;
   b.addEventListener("click",()=>{const entry=state.windows.get(id);if(!entry)return;if(entry.win.classList.contains("min")){entry.win.classList.remove("min");focusWindow(entry.win)}else if(entry.win.classList.contains("focused")){entry.win.classList.add("min")}else focusWindow(entry.win)});
   tasks.appendChild(b);return b;
 }
-function openApp(id){
-  const a=appById(id);if(!a)return;
-  if(state.windows.has(id)){const e=state.windows.get(id);e.win.classList.remove("min");focusWindow(e.win);return}
-  const win=document.createElement("section");win.className="win focused";win.dataset.app=id;win.style.width=a.w+"px";win.style.height=a.h+"px";
-  const offset=state.windows.size*22;win.style.left=Math.max(18,(window.innerWidth-a.w)/2+offset-44)+"px";win.style.top=Math.max(18,(window.innerHeight-a.h)/2+offset-46)+"px";
-  win.innerHTML=`
-    <div class="win-header">
-      <div class="win-controls" role="group" aria-label="Window controls">
-        <button class="win-control close" data-act="close" aria-label="Close"></button>
-        <button class="win-control minimize" data-act="min" aria-label="Minimize"></button>
-        <button class="win-control maximize" data-act="max" aria-label="Maximize"></button>
-      </div>
-      <span class="win-icon">${escapeHtml(a.glyph)}</span>
-      <span class="win-title">${escapeHtml(a.name)}</span>
-    </div>
-    <div class="win-body"></div>
-    <div class="win-resize" aria-hidden="true"></div>`;
+function createWindow(id,meta,fill){
+  const existing=state.windows.get(id);
+  if(existing){existing.win.classList.remove("min");focusWindow(existing.win);return existing.win}
+  const win=document.createElement("section");
+  win.className="win focused";win.dataset.app=id;win.setAttribute("role","dialog");win.setAttribute("aria-label",meta.name);
+  win.style.width=Math.min(meta.w,innerWidth-24)+"px";win.style.height=Math.min(meta.h,desktop.clientHeight-24)+"px";
+  const offset=(state.windows.size%8)*22;
+  win.style.left=Math.max(14,(innerWidth-meta.w)/2+offset-44)+"px";win.style.top=Math.max(14,(desktop.clientHeight-meta.h)/2+offset-46)+"px";
+  win.innerHTML=`<div class="win-header"><div class="win-controls" role="group" aria-label="Window controls"><button class="win-control close" data-act="close" aria-label="Close ${escapeHtml(meta.name)}"></button><button class="win-control minimize" data-act="min" aria-label="Minimize ${escapeHtml(meta.name)}"></button><button class="win-control maximize" data-act="max" aria-label="Maximize ${escapeHtml(meta.name)}"></button></div><span class="win-icon" aria-hidden="true">${escapeHtml(meta.glyph)}</span><span class="win-title">${escapeHtml(meta.name)}</span></div><div class="win-body"></div><div class="win-resize" aria-hidden="true"></div>`;
   desktop.appendChild(win);
-  const task=makeTask(id,win);
+  const task=makeTask(id,win,meta);
   state.windows.set(id,{win,task});
-  renderApp(id,win.querySelector(".win-body"));
+  try{fill(win.querySelector(".win-body"))}catch(err){win.querySelector(".win-body").innerHTML=`<div class="panel"><h3>This window failed to render</h3><p>${escapeHtml(err.message)}</p></div>`;log("ERROR",meta.name+": "+err.message)}
   focusWindow(win);
-  win.querySelector(".win-controls").addEventListener("click",e=>{const act=e.target.dataset.act;if(act==="close")closeApp(id);if(act==="min")win.classList.add("min");if(act==="max")win.classList.toggle("max")});
-  makeDraggable(win,win.querySelector(".win-header"));
-  makeResizable(win,win.querySelector(".win-resize"));
+  win.querySelector(".win-controls").addEventListener("click",e=>{const act=e.target.dataset.act;if(act==="close")closeApp(id);if(act==="min"){win.classList.add("min");task.classList.remove("active")}if(act==="max")toggleMax(win)});
+  win.querySelector(".win-header").addEventListener("dblclick",e=>{if(!e.target.closest(".win-controls"))toggleMax(win)});
+  makeDraggable(win,win.querySelector(".win-header"));makeResizable(win,win.querySelector(".win-resize"));
   win.addEventListener("pointerdown",()=>focusWindow(win),true);
-  log("UI","Opened "+a.name); closeLauncher();
+  closeLauncher();return win;
 }
-function closeApp(id){const e=state.windows.get(id);if(!e)return;e.win.remove();e.task.remove();state.windows.delete(id);log("UI","Closed "+id)}
-function openProject(id){
-  const p=projectById(id);if(!p)return;
-  const existing=[...state.windows.entries()].find(([k])=>k.startsWith("project:" ) && k.split(":")[1]===id);
-  if(existing){existing[1].win.classList.remove("min");focusWindow(existing[1].win);return}
-  const wid="project:"+id;const a={id:wid,name:p.name,glyph:p.icon,w:720,h:620};
-  const win=document.createElement("section");win.className="win focused";win.dataset.app=wid;win.style.width=a.w+"px";win.style.height=a.h+"px";const offset=state.windows.size*18;win.style.left=Math.max(14,(window.innerWidth-a.w)/2+offset-34)+"px";win.style.top=Math.max(14,(window.innerHeight-a.h)/2+offset-34)+"px";
-  win.innerHTML=`<div class="win-header"><div class="win-controls"><button class="win-control close" data-act="close" aria-label="Close"></button><button class="win-control minimize" data-act="min" aria-label="Minimize"></button><button class="win-control maximize" data-act="max" aria-label="Maximize"></button></div><span class="win-icon">${escapeHtml(p.icon)}</span><span class="win-title">${escapeHtml(p.name)}</span></div><div class="win-body"></div><div class="win-resize"></div>`;
-  desktop.appendChild(win);
-  const task=document.createElement("button");task.className="task active";task.dataset.app=wid;task.innerHTML=`<span class="task-glyph">${escapeHtml(p.icon)}</span><span>${escapeHtml(p.name)}</span>`;task.addEventListener("click",()=>{const e=state.windows.get(wid);if(!e)return;if(e.win.classList.contains("min")){e.win.classList.remove("min");focusWindow(e.win)}else if(e.win.classList.contains("focused")){e.win.classList.add("min")}else focusWindow(e.win)});tasks.appendChild(task);state.windows.set(wid,{win,task});
-  renderProjectDetails(win.querySelector(".win-body"),p);focusWindow(win);win.querySelector(".win-controls").addEventListener("click",e=>{const act=e.target.dataset.act;if(act==="close")closeApp(wid);if(act==="min")win.classList.add("min");if(act==="max")win.classList.toggle("max")});makeDraggable(win,win.querySelector(".win-header"));makeResizable(win,win.querySelector(".win-resize"));win.addEventListener("pointerdown",()=>focusWindow(win),true);log("PROJECT","Opened "+p.name);closeLauncher();
+function toggleMax(win){win.classList.toggle("max");win._snap=null}
+function openApp(id){const a=appById(id);if(!a)return;createWindow(id,a,b=>renderApp(id,b));log("UI","Opened "+a.name)}
+function closeApp(id){const e=state.windows.get(id);if(!e)return;e.win.remove();e.task.remove();state.windows.delete(id);const top=[...state.windows.values()].filter(x=>!x.win.classList.contains("min")).sort((x,y)=>(+y.win.style.zIndex||0)-(+x.win.style.zIndex||0))[0];if(top)focusWindow(top.win);log("UI","Closed "+id)}
+function openProject(id){const p=projectById(id);if(!p)return;createWindow("project:"+id,{name:p.name,glyph:p.icon,w:720,h:620},b=>renderProjectDetails(b,p));log("PROJECT","Opened "+p.name)}
+function snapWindow(win,x,y){
+  const W=innerWidth,H=desktop.clientHeight,edge=8;let box=null;
+  if(y<=edge){toggleMax(win);return}
+  if(x<=edge)box=[0,0,W/2,H];else if(x>=W-edge)box=[W/2,0,W/2,H];
+  if(!box)return;
+  win._prev={w:win.style.width,h:win.style.height};win._snap=true;
+  Object.assign(win.style,{left:box[0]+"px",top:box[1]+"px",width:box[2]+"px",height:box[3]+"px"});
 }
-function makeDraggable(win,handle){let active=false,sx=0,sy=0,ox=0,oy=0;handle.addEventListener("pointerdown",e=>{if(e.target.closest(".win-controls")||win.classList.contains("max"))return;active=true;handle.classList.add("drag");handle.setPointerCapture(e.pointerId);const r=win.getBoundingClientRect();sx=e.clientX;sy=e.clientY;ox=r.left;oy=r.top;focusWindow(win)});handle.addEventListener("pointermove",e=>{if(!active)return;const nx=ox+e.clientX-sx,ny=oy+e.clientY-sy;win.style.left=Math.max(-win.offsetWidth+90,Math.min(window.innerWidth-80,nx))+"px";win.style.top=Math.max(0,Math.min(window.innerHeight-64,ny))+"px"});const stop=e=>{if(!active)return;active=false;handle.classList.remove("drag");try{handle.releasePointerCapture(e.pointerId)}catch(_){}};handle.addEventListener("pointerup",stop);handle.addEventListener("pointercancel",stop)}
+function makeDraggable(win,handle){let active=false,sx=0,sy=0,ox=0,oy=0;handle.addEventListener("pointerdown",e=>{if(e.target.closest(".win-controls")||win.classList.contains("max"))return;active=true;handle.classList.add("drag");handle.setPointerCapture(e.pointerId);const r=win.getBoundingClientRect();sx=e.clientX;sy=e.clientY;ox=r.left;oy=r.top;focusWindow(win)});handle.addEventListener("pointermove",e=>{if(!active)return;const nx=ox+e.clientX-sx,ny=oy+e.clientY-sy;if(win._snap&&win._prev){win.style.width=win._prev.w;win.style.height=win._prev.h;win._snap=null}win.classList.add("drag-moved");win.style.left=Math.max(-win.offsetWidth+90,Math.min(window.innerWidth-80,nx))+"px";win.style.top=Math.max(0,Math.min(window.innerHeight-64,ny))+"px"});const stop=e=>{if(!active)return;active=false;handle.classList.remove("drag");if(innerWidth>820&&win.classList.contains("drag-moved"))snapWindow(win,e.clientX,e.clientY);win.classList.remove("drag-moved");try{handle.releasePointerCapture(e.pointerId)}catch(_){}};handle.addEventListener("pointerup",stop);handle.addEventListener("pointercancel",stop)}
 function makeResizable(win,handle){let active=false,sx=0,sy=0,ow=0,oh=0;handle.addEventListener("pointerdown",e=>{if(win.classList.contains("max"))return;active=true;handle.setPointerCapture(e.pointerId);sx=e.clientX;sy=e.clientY;ow=win.offsetWidth;oh=win.offsetHeight;e.stopPropagation()});handle.addEventListener("pointermove",e=>{if(!active)return;win.style.width=Math.max(290,ow+e.clientX-sx)+"px";win.style.height=Math.max(190,oh+e.clientY-sy)+"px"});const stop=e=>{if(!active)return;active=false;try{handle.releasePointerCapture(e.pointerId)}catch(_){}};handle.addEventListener("pointerup",stop);handle.addEventListener("pointercancel",stop)}
 
 /* ============================================================
@@ -770,34 +772,73 @@ function renderExperiments(b){
   $$(".project-card",b).forEach(card=>card.addEventListener("click",()=>openProject(card.dataset.project)));
 }
 function renderTerminal(b){
-  b.innerHTML=`<div class="app-kicker">TERMINAL / PORTFOLIO CLI</div><h2 class="app-title">Terminal</h2><p class="app-sub">This is a local portfolio command line. It does not execute system commands.</p><div class="terminal"><div class="terminal-output" id="termout"></div><div class="terminal-input-row"><span class="terminal-prompt">hossein@os:~$</span><input class="terminal-input" id="terminput" autocomplete="off" spellcheck="false" aria-label="Terminal command"></div></div>`;
-  const out=b.querySelector("#termout"),input=b.querySelector("#terminput");
+  b.innerHTML=`<div class="app-kicker">TERMINAL / PORTFOLIO CLI</div><h2 class="app-title">Terminal</h2><p class="app-sub">A local portfolio shell. It does not run system commands — try <span class="cyan">help</span>, <span class="cyan">neofetch</span> or <span class="cyan">cat system-ai</span>. Tab completes, ↑/↓ browse history.</p><div class="terminal"><div class="terminal-output" id="termout" role="log" aria-live="polite"></div><div class="terminal-input-row"><label class="terminal-prompt" for="terminput" id="termprompt">hossein@os:~$</label><input class="terminal-input" id="terminput" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal command"></div></div>`;
+  const out=b.querySelector("#termout"),input=b.querySelector("#terminput"),promptEl=b.querySelector("#termprompt");
   const print=(txt,cls="")=>{const d=document.createElement("div");d.className=cls;d.innerHTML=txt;out.appendChild(d);out.scrollTop=out.scrollHeight};
-  print('<span class="cyan">HOSSEIN OS terminal</span> <span class="violet">v1.0</span>');print('Type <span class="cyan">help</span> to list commands.');
+  const E=escapeHtml,C=t=>`<span class="cyan">${E(t)}</span>`;
+  const started=Date.now(),hist=[];let hi=0,cwd=[];
+  // ---- virtual filesystem (derived from the real PROJECTS / APPS data) ----
+  const dirs={
+    Projects:{AI:()=>PROJECTS.filter(p=>p.category==="AI"||p.id==="system-ai"),Realtime:()=>PROJECTS.filter(p=>p.group==="REALTIME"),Cloud:()=>PROJECTS.filter(p=>p.group==="EDGE / CLOUD"),Web:()=>PROJECTS.filter(p=>p.group==="WEB"),Utilities:()=>PROJECTS.filter(p=>p.category==="UTILITY"),Experiments:()=>PROJECTS.filter(p=>p.group==="EXPERIMENT")},
+    Labs:()=>["ai-lab","realtime-lab","edge-lab","network"].map(id=>({id,name:appById(id)?.name||id})),
+    Desktop:()=>DESKTOP_APPS.map(id=>({id,name:appById(id)?.name||id})),
+    About:()=>[{id:"readme.md",name:"README"}],
+    Contact:()=>[{id:"github",name:"GitHub"},{id:"portfolio",name:"Portfolio"}]
+  };
+  const node=path=>{let n=dirs;for(const seg of path){if(typeof n==="function")return null;const k=Object.keys(n).find(x=>x.toLowerCase()===seg.toLowerCase());if(!k)return null;n=n[k]}return n};
+  const resolve=arg=>{let path=arg.startsWith("/home/hossein")?arg.replace("/home/hossein","").split("/").filter(Boolean):arg.startsWith("~")?arg.slice(1).split("/").filter(Boolean):[...cwd,...arg.split("/").filter(Boolean)];const out2=[];for(const seg of path){if(seg===".")continue;if(seg==="..")out2.pop();else out2.push(seg)}return out2};
+  const pathStr=()=>"~"+(cwd.length?"/"+cwd.join("/"):"");
+  const setPrompt=()=>{promptEl.textContent="hossein@os:"+pathStr()+"$"};
+  const lsOf=path=>{const n=path.length?node(path):dirs;if(!n)return null;return typeof n==="function"?n().map(x=>x.id):Object.keys(n).map(k=>k+"/")};
+  const readme="HOSSEIN OS — a portfolio that behaves like a desktop.\nBuild. Break. Understand. Improve.\n\nContent is intentionally factual: no invented experience, users, metrics or awards.";
   const cmds={
-    help:()=>print(`help       show commands\nwhoami     system identity\nabout      identity summary\nprojects   list primary projects\nskills     technical areas\nai         AI-related work\ncloud      edge / Cloudflare themes\nrealtime   realtime work\nnetwork    network project\ngithub     open GitHub profile\nopen NAME  open an application or project\ncontact    public contact links\nls         list desktop apps\npwd        show portfolio path\ndate       current time\nclear      clear terminal\nsudo       try something silly`),
+    help:()=>print(`<span class="violet">navigation</span>\nls [dir]      list a folder\ncd DIR        change folder (~, .. supported)\npwd           current path\ncat NAME      read a project (or README.md)\nopen NAME     open an app or project window\n\n<span class="violet">about</span>\nwhoami  about  skills  projects  ai  cloud  realtime  network  contact  github\n\n<span class="violet">system</span>\nneofetch  top  history  date  theme dark|light  lock  reboot  clear\n\n<span class="violet">secrets</span>\nthere are a few. sudo is a good start.`),
     whoami:()=>print('Hossein\nComputer Engineering student\nDeveloper\nWeb / AI / Edge / Realtime'),
     about:()=>print('Computer Engineering student building practical software across web applications, AI tools, Cloudflare edge systems, realtime applications, APIs and experiments.'),
-    projects:()=>PROJECTS.slice(0,8).forEach(p=>print(`<span class="cyan">${escapeHtml(p.id)}</span> — ${escapeHtml(p.name)}`)),
-    skills:()=>print('JavaScript · TypeScript · Python · PHP · HTML · CSS · SQL · React · Next.js · APIs · MySQL · Supabase · Cloudflare Workers · Durable Objects · D1 · KV · WebSockets · LLM APIs · Git · GitHub'),
+    projects:()=>PROJECTS.slice(0,8).forEach(p=>print(`${C(p.id)} — ${E(p.name)}`)),
+    skills:()=>print('JavaScript · TypeScript · Python · PHP · HTML · CSS · SQL\nReact · Next.js · APIs · MySQL · Supabase\nCloudflare Workers · Durable Objects · D1 · KV · WebSockets\nLLM APIs · OpenRouter · Groq · Telegram Bot API · Tavily\nGit · GitHub · debugging · deployment'),
     ai:()=>print('LLM APIs · OpenRouter · Groq · Telegram Bot API · web search · image understanding · memory · tool calling · automation'),
     cloud:()=>print('Cloudflare Workers\nDurable Objects\nKV\nD1\nWebSockets\nedge / serverless application patterns'),
     realtime:()=>print('WireChat\nLive Messenger\nCool UI Chat Website\nWebSockets · rooms · synchronization · messaging'),
-    network:()=>print('Ping Monitor — browser-side HTTPS fetch timing\nHTTP 204 — https://204.hossein.my.id/\nPing — https://ping.hossein.my.id/'),
+    network:()=>print('Ping Monitor — browser-side HTTPS fetch timing (not ICMP)\nHTTP 204 — https://204.hossein.my.id/\nPing — https://ping.hossein.my.id/'),
     github:()=>{openExternal(LINKS.github);print('Opening GitHub ↗','violet')},
-    contact:()=>{print('GitHub: github.com/Hosseinb1111');print('Portfolio: hossein.my.id');print('Email: hello@hossein.my.id')},
-    ls:()=>print(APPS.map(a=>a.short).join('   ')),
-    pwd:()=>print('/home/hossein/'),
-    date:()=>print(escapeHtml(new Date().toString())),
-    clear:()=>out.innerHTML='',
-    sudo:()=>print('Permission denied. Nice try.','err'),
-    open:(args)=>{
-      const q=args.join(' ').toLowerCase();const a=APPS.find(x=>x.id===q||x.short===q||x.name.toLowerCase()===q);if(a){openApp(a.id);print('opening <span class="cyan">'+escapeHtml(a.name)+'</span>…');return}
-      const p=PROJECTS.find(x=>x.id===q||x.name.toLowerCase()===q);if(p){openProject(p.id);print('opening <span class="cyan">'+escapeHtml(p.name)+'</span>…');return}
-      print('No application or project named '+escapeHtml(q),'err');
-    }
+    contact:()=>{print('GitHub: github.com/Hosseinb1111');print('Portfolio: hossein.my.id');if(LINKS.email)print('Email: '+E(LINKS.email.replace("mailto:","")))},
+    pwd:()=>print("/home/hossein"+(cwd.length?"/"+cwd.join("/"):"")),
+    ls:args=>{const path=args[0]?resolve(args[0]):cwd;const l=lsOf(path);if(!l)return print("ls: no such directory: "+E(args[0]||""),"err");print(l.map(x=>x.endsWith("/")?C(x):E(x)).join("   ")||"(empty)")},
+    cd:args=>{if(!args[0]){cwd=[];setPrompt();return}const path=resolve(args[0]);if(path.length&&!lsOf(path))return print("cd: no such directory: "+E(args[0]),"err");cwd=path.map((seg,i)=>{const n2=node(path.slice(0,i));return Object.keys(n2||{}).find(k=>k.toLowerCase()===seg.toLowerCase())||seg});setPrompt()},
+    cat:args=>{const q=(args[0]||"").toLowerCase();if(!q)return print("usage: cat NAME","err");if(q==="readme.md")return print(E(readme));const p=PROJECTS.find(x=>x.id===q||x.name.toLowerCase()===q);if(!p)return print("cat: "+E(q)+": no such project","err");print(`${C(p.name)}  <span class="violet">${E(p.category)}</span>\n${E(p.description)}\nstack: ${E(p.stack.join(" · "))}`+(p.live?`\nlive:   ${E(p.live)}`:"")+(p.source?`\nsource: ${E(p.source)}`:""))},
+    open:args=>{
+      const q=args.join(" ").toLowerCase();if(!q)return print("usage: open NAME","err");
+      const a=APPS.find(x=>x.id===q||x.short===q||x.name.toLowerCase()===q);if(a){openApp(a.id);return print("opening "+C(a.name)+"…")}
+      const p=PROJECTS.find(x=>x.id===q||x.name.toLowerCase()===q);if(p){openProject(p.id);return print("opening "+C(p.name)+"…")}
+      print("No application or project named "+E(q),"err")},
+    neofetch:()=>{const up=Math.round((Date.now()-started)/1000);print(`<span class="cyan">hossein</span>@<span class="cyan">os</span>\n-------------\nOS:        HOSSEIN OS v1.0\nRole:      Computer Engineering student & developer\nFocus:     web · AI · Cloudflare edge · realtime\nShell:     portfolio-cli\nTheme:     ${E(state.theme)}\nLanguage:  ${E(state.language)}\nWindows:   ${state.windows.size} open\nDisplay:   ${innerWidth}×${innerHeight}\nSession:   ${up}s\n<span class="violet">(values above are read from this browser session)</span>`)},
+    top:()=>{const rows=[...state.windows.keys()];print('<span class="violet">open windows act as processes — this is not real system telemetry</span>');print(rows.length?rows.map(r=>"  "+E(r)).join("\n"):"  (no windows open)")},
+    history:()=>hist.length?hist.forEach((h,i)=>print(String(i+1).padStart(3)+"  "+E(h))):print("(empty)"),
+    date:()=>print(E(new Date().toString())),
+    theme:args=>{if(!["dark","light"].includes(args[0]))return print("usage: theme dark|light","err");setTheme(args[0]);print("theme → "+E(args[0]))},
+    lock:()=>$("#lockbtn").click(),
+    reboot:()=>{print("rebooting…");setTimeout(()=>location.reload(),500)},
+    clear:()=>{out.innerHTML=""},
+    echo:args=>print(E(args.join(" "))),
+    coffee:()=>print("☕ brewing… error 418: I'm a teapot.","violet"),
+    xyzzy:()=>print("Nothing happens.","violet"),
+    konami:()=>print("↑ ↑ ↓ ↓ ← → ← → b a  (try it on the desktop)","violet"),
+    exit:()=>{const e=[...state.windows.entries()].find(([,v])=>v.win.contains(input));if(e)closeApp(e[0])},
+    sudo:args=>{const t=args.join(" ").toLowerCase();if(t==="make me coffee"||t==="make me a coffee")return print("☕ Okay. (Permission granted for this one thing only.)","violet");if(t.startsWith("rm -rf"))return print("Nice try. This filesystem is fictional and so are your odds.","err");print("hossein is not in the sudoers file. This incident will be reported to… nobody.","err")}
   };
-  input.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const raw=input.value.trim();input.value="";if(!raw)return;print(`<span class="prompt">hossein@os:~$</span> ${escapeHtml(raw)}`);const [cmd,...args]=raw.split(/\s+/);if(cmds[cmd.toLowerCase()])cmds[cmd.toLowerCase()](args);else print('command not found: '+escapeHtml(cmd),'err')});setTimeout(()=>input.focus(),40);
+  const names=Object.keys(cmds);
+  const completions=(word,first)=>{if(first)return names.filter(n=>n.startsWith(word));const ids=[...PROJECTS.map(p=>p.id),...APPS.map(a=>a.id)];return ids.filter(i=>i.startsWith(word))};
+  print(`${C("HOSSEIN OS terminal")} <span class="violet">v1.1</span>`);print("Type "+C("help")+" to list commands.");
+  input.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){const raw=input.value.trim();input.value="";if(!raw)return;hist.push(raw);hi=hist.length;print(`<span class="prompt">hossein@os:${E(pathStr())}$</span> ${E(raw)}`);const [cmd,...args]=raw.split(/\s+/);const f=cmds[cmd.toLowerCase()];if(f){try{f(args)}catch(err){print("error: "+E(err.message),"err")}}else print("command not found: "+E(cmd)+" — try "+C("help"),"err")}
+    else if(e.key==="ArrowUp"){e.preventDefault();if(hi>0){hi--;input.value=hist[hi]}}
+    else if(e.key==="ArrowDown"){e.preventDefault();if(hi<hist.length-1){hi++;input.value=hist[hi]}else{hi=hist.length;input.value=""}}
+    else if(e.key==="Tab"){e.preventDefault();const parts=input.value.split(/\s+/);const word=parts[parts.length-1].toLowerCase();const m=completions(word,parts.length===1);if(m.length===1){parts[parts.length-1]=m[0];input.value=parts.join(" ")+" "}else if(m.length>1)print(m.map(E).join("   "),"violet")}
+    else if(e.key==="l"&&e.ctrlKey){e.preventDefault();out.innerHTML=""}
+  });
+  b.querySelector(".terminal").addEventListener("click",()=>{if(!getSelection().toString())input.focus()});
+  setTimeout(()=>{if(innerWidth>820)input.focus()},40);
 }
 function renderGitHub(b){
   b.innerHTML=`<div class="app-kicker">GITHUB / PUBLIC PROFILE</div><h2 class="app-title">GitHub</h2><p class="app-sub">Live public profile information is retrieved from GitHub when possible. No stars, followers, commits or contribution counts are hardcoded here.</p><div id="githubContent"><div class="panel"><p>Loading public profile…</p></div></div>`;
@@ -830,18 +871,20 @@ function renderSettings(b){
     panel.innerHTML=tab==="appearance"?`
       <div class="setting-row"><div class="copy"><strong>Theme</strong><span>Switch between the dark workstation and light surface.</span></div><select class="select" id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select></div>
       <div class="setting-row"><div class="copy"><strong>Motion</strong><span>Enable animated transitions and effects.</span></div><button class="switch ${state.motion?"on":""}" id="motionSwitch" aria-label="Toggle motion"></button></div>
+      <div class="setting-row"><div class="copy"><strong>Idle lock screen</strong><span>Show the lock screen after 3 minutes without input.</span></div><button class="switch ${state.idle?"on":""}" id="idleSwitch" role="switch" aria-checked="${state.idle}" aria-label="Toggle idle lock screen"></button></div>
       <div class="setting-row"><div class="copy"><strong>Language</strong><span>Switch interface direction and typography.</span></div><select class="select" id="langSelect"><option value="en">English</option><option value="fa">فارسی</option></select></div>`:`
       <div class="setting-row"><div class="copy"><strong>GitHub</strong><span>Open the public source profile.</span></div><a class="btn secondary" href="${LINKS.github}" target="_blank" rel="noopener">Open</a></div>
       <div class="setting-row"><div class="copy"><strong>Portfolio</strong><span>Open the main web portfolio.</span></div><a class="btn secondary" href="${LINKS.portfolio}" target="_blank" rel="noopener">Open</a></div>
       <div class="setting-row"><div class="copy"><strong>About HOSSEIN OS</strong><span>Read the product notes and design intent.</span></div><button class="btn secondary" id="readmeBtn">Open</button></div>`;
     const ts=panel.querySelector("#themeSelect");if(ts){ts.value=state.theme;ts.addEventListener("change",e=>setTheme(e.target.value));}
-    const ms=panel.querySelector("#motionSwitch");if(ms)ms.addEventListener("click",()=>{state.motion=!state.motion;localStorage.setItem("hossein-os-motion",state.motion?"on":"off");document.body.dataset.motion=state.motion?"on":"off";ms.classList.toggle("on",state.motion);notify("Motion",state.motion?"Animations enabled":"Animations disabled","good")});
+    const ms=panel.querySelector("#motionSwitch");if(ms)ms.addEventListener("click",()=>{state.motion=!state.motion;store.set("hossein-os-motion",state.motion?"on":"off");document.body.dataset.motion=state.motion?"on":"off";ms.classList.toggle("on",state.motion);window.wallSync&&wallSync();notify("Motion",state.motion?"Animations enabled":"Animations disabled","good")});
+    const is=panel.querySelector("#idleSwitch");if(is)is.addEventListener("click",()=>{state.idle=!state.idle;store.set("hossein-os-idle",state.idle?"on":"off");is.classList.toggle("on",state.idle);is.setAttribute("aria-checked",state.idle);armIdle()});
     const ls=panel.querySelector("#langSelect");if(ls){ls.value=state.language;ls.addEventListener("change",e=>{setLanguage(e.target.value);draw(tab)})}
     panel.querySelector("#readmeBtn")?.addEventListener("click",()=>openApp("readme"));
   }
   b.querySelectorAll(".settings-tab").forEach(t=>t.addEventListener("click",()=>draw(t.dataset.tab)));draw("appearance");
 }
-function renderContact(b){b.innerHTML=`<div class="app-kicker">CONTACT / PUBLIC CHANNELS</div><h2 class="app-title">Get In Touch</h2><p class="app-sub">No agency language, no invented company persona — just the public developer channels.</p><div class="app-grid two"><div class="panel"><h3>GitHub</h3><p>@Hosseinb1111</p><div class="btn-row"><a class="btn" href="${LINKS.github}" target="_blank" rel="noopener">View GitHub ↗</a></div></div><div class="panel"><h3>Portfolio</h3><p>hossein.my.id</p><div class="btn-row"><a class="btn secondary" href="${LINKS.portfolio}" target="_blank" rel="noopener">Visit portfolio ↗</a></div></div></div><div class="section-label">Email / contact</div><div class="panel"><p>${escapeHtml(LINKS.email.replace("mailto:",""))}</p><div class="btn-row"><a class="btn" href="${LINKS.email}">Open email ↗</a></div></div>`}
+function renderContact(b){b.addEventListener("click",e=>{const t=e.target.closest("[data-copy]");if(!t)return;(navigator.clipboard?navigator.clipboard.writeText(t.dataset.copy):Promise.reject()).then(()=>notify("Copied",t.dataset.copy,"good")).catch(()=>notify("Copy failed","Select the address and copy it manually.","warn"))});b.innerHTML=`<div class="app-kicker">CONTACT / PUBLIC CHANNELS</div><h2 class="app-title">Get In Touch</h2><p class="app-sub">No agency language, no invented company persona — just the public developer channels.</p><div class="app-grid two"><div class="panel"><h3>GitHub</h3><p>@Hosseinb1111</p><div class="btn-row"><a class="btn" href="${LINKS.github}" target="_blank" rel="noopener">View GitHub ↗</a></div></div><div class="panel"><h3>Portfolio</h3><p>hossein.my.id</p><div class="btn-row"><a class="btn secondary" href="${LINKS.portfolio}" target="_blank" rel="noopener">Visit portfolio ↗</a></div></div></div>${LINKS.email?`<div class="section-label">Email</div><div class="panel"><p>${escapeHtml(LINKS.email.replace("mailto:",""))}</p><div class="btn-row"><a class="btn" href="${LINKS.email}">Open email ↗</a><button class="btn secondary" data-copy="${escapeHtml(LINKS.email.replace("mailto:",""))}">Copy address</button></div></div>`:""}`}
 function renderTimeline(b){
   const items=[
     ["Early experiment","Small web projects and interactive experiments.","small scope · learning by shipping"],
@@ -871,6 +914,10 @@ function unlock(){if(!lock.classList.contains("show"))return;lock.classList.remo
 $("#lockbtn").addEventListener("click",()=>{lock.classList.add("show");resizeLock();cancelAnimationFrame(raf);drawLock();log("SEC","Screen locked")});lock.addEventListener("click",unlock);addEventListener("resize",resizeLock);
 const shutdown=$("#shutdown");function showShutdown(){shutdown.classList.add("show");closeLauncher();log("SYSTEM","Shutdown screen opened")}$("#poweron").addEventListener("click",()=>{shutdown.classList.remove("show");log("SYSTEM","Session restarted")});
 
+/* idle: after 3 minutes without input, show the lock screen (toggle in Settings) */
+let idleTimer=0;const IDLE_MS=180000;
+function armIdle(){clearTimeout(idleTimer);if(!state.idle||!state.bootDone)return;idleTimer=setTimeout(()=>{if(!lock.classList.contains("show"))$("#lockbtn").click()},IDLE_MS)}
+["pointerdown","keydown","pointermove","wheel","touchstart"].forEach(ev=>addEventListener(ev,armIdle,{passive:true}));
 /* ============================================================
    KEYBOARD / EASTER EGGS
    ============================================================ */
@@ -881,6 +928,7 @@ addEventListener("keydown",e=>{
   if(lock.classList.contains("show")){unlock();return}
   if(e.key==="Escape"){closeLauncher();$$(".win.focused").forEach(w=>w.classList.remove("focused"));return}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();toggleLauncher();return}
+  if(e.altKey&&e.key.toLowerCase()==="w"){const f=$(".win.focused");if(f){e.preventDefault();closeApp(f.dataset.app)}return}
   if(e.key==="F1"){e.preventDefault();openApp("readme");return}
   if(e.key==="F10"){e.preventDefault();showShutdown();return}
   konami.push(e.key);if(konami.length>KONAMI.length)konami.shift();if(konami.join(",")===KONAMI.join(",")){notify("Easter egg","Konami sequence accepted. No production privileges granted.","good");log("EGG","Konami sequence accepted");konami=[]}
@@ -904,7 +952,7 @@ const BOOT_LINES=[
   ["System ready. Welcome.","sys"]
 ];
 let bootIndex=0;
-function finishBoot(){if(state.bootDone)return;state.bootDone=true;boot.classList.add("gone");setTimeout(()=>boot.remove(),460);log("BOOT","HOSSEIN OS ready")}
+function finishBoot(){if(state.bootDone)return;state.bootDone=true;armIdle();boot.classList.add("gone");setTimeout(()=>boot.remove(),460);log("BOOT","HOSSEIN OS ready")}
 function bootStep(){if(state.bootDone)return;if(bootIndex>=BOOT_LINES.length){finishBoot();return}const [text,cls]=BOOT_LINES[bootIndex];const d=document.createElement("div");d.className=cls;d.textContent=text;bootlog.appendChild(d);bootprogress.style.width=((bootIndex+1)/BOOT_LINES.length*100)+"%";bootIndex++;setTimeout(bootStep,145+Math.random()*180)}
 boot.addEventListener("click",finishBoot);setTimeout(bootStep,280);
 
@@ -914,8 +962,51 @@ boot.addEventListener("click",finishBoot);setTimeout(bootStep,280);
 renderDesktopIcons();renderLauncher();
 log("BOOT","Interface initialized");log("LOAD","Portfolio modules indexed");log("EDGE","Cloudflare work mapped");log("AI","AI projects indexed");log("REALTIME","Realtime work indexed");log("NETWORK","Network utilities indexed");
 
+
+/* ============================================================
+   WALLPAPER — illustrative edge map (not real topology or traffic)
+   ============================================================ */
+(function(){
+  const cv=$("#wall"),c=cv.getContext("2d");let W=0,H=0,nodes=[],pk=[],run=false,raf=0,last=0;
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)");
+  function size(){const d=Math.min(devicePixelRatio||1,2);W=desktop.clientWidth;H=desktop.clientHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);
+    const n=Math.max(14,Math.min(34,Math.round(W*H/42000)));let seed=7;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+    nodes=Array.from({length:n},(_,i)=>({x:r()*W,y:r()*H,hub:i%7===0,ph:r()*6.28}));
+    nodes.forEach((a,i)=>{a.links=nodes.map((b,j)=>[j,Math.hypot(a.x-b.x,a.y-b.y)]).filter(x=>x[0]!==i).sort((x,y)=>x[1]-y[1]).slice(0,2).map(x=>x[0])});
+    pk=[];if(!run)draw(0)}
+  function col(){return state.theme==="dark"?{line:"120,170,210",hub:"255,155,98",dot:"92,231,255"}:{line:"60,100,140",hub:"189,95,27",dot:"0,126,158"}}
+  function draw(t){
+    c.clearRect(0,0,W,H);const k=col();
+    c.lineWidth=1;nodes.forEach(a=>a.links.forEach(j=>{const b=nodes[j];c.strokeStyle=`rgba(${k.line},.11)`;c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()}));
+    nodes.forEach(a=>{const pulse=run?.5+.5*Math.sin(t/900+a.ph):.6;c.fillStyle=a.hub?`rgba(${k.hub},${.35+.3*pulse})`:`rgba(${k.dot},${.22+.2*pulse})`;c.beginPath();c.arc(a.x,a.y,a.hub?3.2:1.8,0,6.283);c.fill();if(a.hub){c.strokeStyle=`rgba(${k.hub},${.12*pulse})`;c.beginPath();c.arc(a.x,a.y,9+pulse*4,0,6.283);c.stroke()}});
+    pk.forEach(q=>{const a=nodes[q.a],b=nodes[q.b],x=a.x+(b.x-a.x)*q.t,y=a.y+(b.y-a.y)*q.t;c.fillStyle=`rgba(${k.hub},.8)`;c.fillRect(x-1.5,y-1.5,3,3)});
+  }
+  function frame(t){if(!run)return;const dt=Math.min(t-last,60);last=t;
+    if(pk.length<6&&Math.random()<.03){const a=(Math.random()*nodes.length)|0,l=nodes[a].links;pk.push({a,b:l[(Math.random()*l.length)|0],t:0})}
+    pk.forEach(q=>q.t+=dt/1400);pk=pk.filter(q=>q.t<1);draw(t);raf=requestAnimationFrame(frame)}
+  function sync(){const want=state.motion&&!reduce.matches&&!document.hidden;if(want&&!run){run=true;last=performance.now();raf=requestAnimationFrame(frame)}else if(!want&&run){run=false;cancelAnimationFrame(raf);draw(0)}}
+  addEventListener("resize",size);document.addEventListener("visibilitychange",sync);reduce.addEventListener?.("change",sync);
+  window.wallSync=()=>{sync();if(!run)draw(0)};size();sync();
+})();
+
+/* ============================================================
+   DESKTOP CONTEXT MENU
+   ============================================================ */
+(function(){
+  const m=document.createElement("div");m.id="ctxmenu";m.setAttribute("role","menu");document.body.appendChild(m);
+  const items=[["Open terminal","",()=>openApp("terminal")],["Open projects","",()=>openApp("projects")],["Launcher","Ctrl K",()=>toggleLauncher()],null,
+    ["Switch theme","",()=>setTheme(state.theme==="dark"?"light":"dark")],["Lock screen","",()=>$("#lockbtn").click()],["Minimize all","",()=>state.windows.forEach(e=>{e.win.classList.add("min");e.task.classList.remove("active")})],null,["About HOSSEIN OS","F1",()=>openApp("readme")]];
+  function hide(){m.classList.remove("show")}
+  function show(x,y){m.innerHTML=items.map((it,i)=>it?`<button role="menuitem" data-i="${i}">${escapeHtml(it[0])}<kbd>${escapeHtml(it[1])}</kbd></button>`:"<hr>").join("");
+    m.classList.add("show");m.style.left=Math.min(x,innerWidth-m.offsetWidth-6)+"px";m.style.top=Math.min(y,innerHeight-m.offsetHeight-6)+"px";m.querySelector("button").focus()}
+  m.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const it=items[+b.dataset.i];hide();it[2]()});
+  m.addEventListener("keydown",e=>{const bs=[...m.querySelectorAll("button")],i=bs.indexOf(document.activeElement);if(e.key==="ArrowDown"){e.preventDefault();bs[(i+1)%bs.length].focus()}if(e.key==="ArrowUp"){e.preventDefault();bs[(i-1+bs.length)%bs.length].focus()}if(e.key==="Escape"){e.stopPropagation();hide()}});
+  document.addEventListener("contextmenu",e=>{if(e.target.closest(".win"))return;if(e.target===desktop||e.target.id==="wall"||e.target.classList.contains("icons")){e.preventDefault();if(innerWidth>820)show(e.clientX,e.clientY)}});
+  document.addEventListener("click",hide);addEventListener("blur",hide);
+})();
+
 /* Prevent context-menu surprises while preserving keyboard access. */
-document.addEventListener("contextmenu",e=>{if(e.target.closest(".win")||e.target.closest("#desktop"))e.preventDefault()});
+document.addEventListener("contextmenu",e=>{if(e.target.closest("#desktop")&&!e.target.closest("input,textarea"))e.preventDefault()});
 </script>
 </body>
 </html>

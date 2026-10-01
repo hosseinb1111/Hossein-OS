@@ -404,6 +404,32 @@ Serverless
 
 ---
 
+### Desktop additions
+
+```text
+Wallpaper       illustrative edge-network map (nodes, links, small packets);
+                illustrative only, pauses when the tab is hidden, motion is off,
+                or reduced-motion is set
+Right-click     desktop menu: terminal, projects, launcher, theme, lock,
+                minimize all, about (arrow keys + Esc work)
+Contact         email shown with Open / Copy address
+```
+
+### Terminal v1.1 additions
+
+```text
+cd / ls / pwd   navigate the virtual filesystem (built from the real project data)
+cat NAME        read a project's description, stack and links
+neofetch        session info read from this browser (nothing invented)
+top             open windows listed as "processes" (not real telemetry)
+theme dark|light, lock, reboot, history
+Tab             autocomplete commands and project/app ids
+Up / Down       command history
+sudo make me coffee
+```
+
+---
+
 ## 📁 Portfolio filesystem
 
 The File Explorer uses a fictional filesystem to organize the real portfolio conceptually:
@@ -540,6 +566,8 @@ Examples include:
 - wallpaper interaction Easter egg
 - developer-oriented system messages
 - reboot / shutdown interactions
+- `sudo make me coffee` in the terminal
+- idle lock screen after 3 minutes (toggle in Settings)
 
 They are deliberately subtle so the portfolio remains usable first.
 
@@ -665,7 +693,7 @@ Because the current version is self-contained, you do not need a framework setup
 
 ### Option 1 — open directly
 
-Open `hossein-os.html` in a modern browser.
+Open `index.html` in a modern browser.
 
 ### Option 2 — serve it locally
 
@@ -678,7 +706,7 @@ python -m http.server 8080
 Then visit:
 
 ```text
-http://localhost:8080/hossein-os.html
+http://localhost:8080/
 ```
 
 Using Node.js:
@@ -699,6 +727,10 @@ A local server is useful when testing browser behavior and remote API requests.
 | `F1` | Open README Viewer |
 | `F10` | Open shutdown screen |
 | `Esc` | Close launcher / clear active state |
+| `Alt + W` | Close the focused window |
+| Double-click title bar | Maximize / restore |
+| Drag window to left / right edge | Snap to half screen (desktop) |
+| Drag window to top edge | Maximize |
 | Any key on lock screen | Unlock |
 | Boot click / keypress | Skip boot sequence |
 
